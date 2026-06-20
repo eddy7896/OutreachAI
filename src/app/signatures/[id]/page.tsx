@@ -4,13 +4,15 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Box, Typography, TextField, Button, Paper, CircularProgress, Alert, FormControlLabel, Switch } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { fetchOne, createDocument, updateDocument } from '@/lib/firestore';
 import { Signature } from '@/types';
 
-export default function SignatureEditorPage({ params }: { params: { id: string } }) {
+export default function SignatureEditorPage() {
   const router = useRouter();
-  const isNew = params.id === 'new';
+  const params = useParams();
+  const id = params.id as string;
+  const isNew = id === 'new';
 
   const [name, setName] = useState('');
   const [htmlContent, setHtmlContent] = useState('<p><br>--<br><strong>Your Name</strong><br>Founder, Your Company<br>yourwebsite.com</p>');
@@ -24,7 +26,7 @@ export default function SignatureEditorPage({ params }: { params: { id: string }
     async function loadSignature() {
       if (isNew) return;
       try {
-        const sig = await fetchOne<Signature>('signatures', params.id);
+        const sig = await fetchOne<Signature>('signatures', id);
         if (sig) {
           setName(sig.name);
           setHtmlContent(sig.htmlContent);
@@ -39,7 +41,7 @@ export default function SignatureEditorPage({ params }: { params: { id: string }
       }
     }
     loadSignature();
-  }, [params.id, isNew]);
+  }, [id, isNew]);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -64,7 +66,7 @@ export default function SignatureEditorPage({ params }: { params: { id: string }
       if (isNew) {
         await createDocument('signatures', signatureData);
       } else {
-        await updateDocument('signatures', params.id, signatureData);
+        await updateDocument('signatures', id, signatureData);
       }
 
       router.push('/signatures');

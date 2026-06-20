@@ -9,7 +9,7 @@ import IconButton from '@mui/material/IconButton';
 import Badge from '@mui/material/Badge';
 import InputBase from '@mui/material/InputBase';
 import { styled, alpha } from '@mui/material/styles';
-import { Search as SearchIcon, Notifications, Settings } from '@mui/icons-material';
+import { Search as SearchIcon, Notifications, Settings, Menu as MenuIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useNotifications } from '@/hooks/useNotifications';
 import { 
@@ -63,7 +63,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-export default function TopBar() {
+export default function TopBar({ onDrawerToggle }: { onDrawerToggle?: () => void }) {
   const router = useRouter();
   const { notifications, markAsRead, markAllAsRead } = useNotifications();
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
@@ -105,8 +105,8 @@ export default function TopBar() {
       position="fixed"
       elevation={0}
       sx={{
-        width: `calc(100% - ${drawerWidth}px)`,
-        ml: `${drawerWidth}px`,
+        width: { sm: `calc(100% - ${drawerWidth}px)` },
+        ml: { sm: `${drawerWidth}px` },
         backgroundColor: 'background.paper',
         borderBottom: '1px solid',
         borderColor: 'divider',
@@ -114,6 +114,15 @@ export default function TopBar() {
       }}
     >
       <Toolbar>
+        <IconButton
+          color="inherit"
+          aria-label="open drawer"
+          edge="start"
+          onClick={onDrawerToggle}
+          sx={{ mr: 2, display: { sm: 'none' } }}
+        >
+          <MenuIcon />
+        </IconButton>
         <Search>
           <SearchIconWrapper>
             <SearchIcon />

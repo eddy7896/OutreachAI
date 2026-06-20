@@ -44,26 +44,12 @@ const menuItems = [
   { text: 'Analytics', icon: <BarChart />, path: '/analytics' },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ mobileOpen, handleDrawerToggle }: { mobileOpen?: boolean, handleDrawerToggle?: () => void }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  return (
-    <Drawer
-      sx={{
-        width: drawerWidth,
-        flexShrink: 0,
-        '& .MuiDrawer-paper': {
-          width: drawerWidth,
-          boxSizing: 'border-box',
-          backgroundColor: 'background.default',
-          borderRight: '1px solid',
-          borderColor: 'divider',
-        },
-      }}
-      variant="permanent"
-      anchor="left"
-    >
+  const drawerContent = (
+    <>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
         <Email color="primary" fontSize="large" />
         <Typography variant="h6" sx={{ fontWeight: 'bold' }} color="primary">
@@ -118,6 +104,45 @@ export default function Sidebar() {
           );
         })}
       </List>
-    </Drawer>
+    </>
+  );
+
+  return (
+    <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{ keepMounted: true }} // Better open performance on mobile
+        sx={{
+          display: { xs: 'block', sm: 'none' },
+          '& .MuiDrawer-paper': { 
+            boxSizing: 'border-box', 
+            width: drawerWidth,
+            backgroundColor: 'background.default',
+            borderRight: '1px solid',
+            borderColor: 'divider',
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: 'none', sm: 'block' },
+          '& .MuiDrawer-paper': { 
+            boxSizing: 'border-box', 
+            width: drawerWidth,
+            backgroundColor: 'background.default',
+            borderRight: '1px solid',
+            borderColor: 'divider',
+          },
+        }}
+        open
+      >
+        {drawerContent}
+      </Drawer>
+    </Box>
   );
 }

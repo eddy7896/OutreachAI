@@ -16,8 +16,12 @@ import {
   Button,
   CircularProgress,
   Badge,
+  useTheme,
+  useMediaQuery,
+  IconButton
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { collection, query, where, onSnapshot, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Lead, Email } from '@/types';
@@ -31,6 +35,9 @@ export default function InboxPage() {
   const [subjectText, setSubjectText] = useState('');
   const [sending, setSending] = useState(false);
   const [loadingLeads, setLoadingLeads] = useState(true);
+  
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   const unreadRef = React.useRef<HTMLDivElement>(null);
 
@@ -173,12 +180,13 @@ export default function InboxPage() {
   const selectedLead = repliedLeads.find(l => l.id === selectedLeadId);
 
   return (
-    <Box sx={{ display: 'flex', height: 'calc(100vh - 100px)', gap: 2 }}>
+    <Box sx={{ display: 'flex', height: { xs: 'calc(100vh - 80px)', md: 'calc(100vh - 100px)' }, gap: { xs: 0, md: 2 } }}>
       {/* LEFT PANE: Leads List */}
-      <Paper sx={{ width: 300, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-          <Typography variant="h6">Inbox</Typography>
-        </Box>
+      {(!isMobile || !selectedLeadId) && (
+        <Paper sx={{ width: { xs: '100%', md: 300 }, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Typography variant="h6">Inbox</Typography>
+          </Box>
         <List sx={{ flex: 1, overflow: 'auto' }}>
           {loadingLeads ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress size={24} /></Box>
@@ -211,16 +219,25 @@ export default function InboxPage() {
           )}
         </List>
       </Paper>
+      )}
 
       {/* RIGHT PANE: Thread View */}
-      <Paper sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {selectedLead ? (
-          <>
-            {/* Header */}
-            <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="h6">{selectedLead.firstName} {selectedLead.lastName}</Typography>
-              <Typography variant="body2" color="text.secondary">{selectedLead.email}</Typography>
-            </Box>
+      {(!isMobile || selectedLeadId) && (
+        <Paper sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {selectedLead ? (
+            <>
+              {/* Header */}
+              <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {isMobile && (
+                    <IconButton edge="start" onClick={() => setSelectedLeadId(null)}>
+                      <ArrowBackIcon />
+                    </IconButton>
+                  )}
+                  <Typography variant="h6">{selectedLead.firstName} {selectedLead.lastName}</Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>{selectedLead.email}</Typography>
+              </Box>
 
             {/* Thread */}
             <Box sx={{ flex: 1, overflow: 'auto', p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -317,6 +334,7 @@ export default function InboxPage() {
           </Box>
         )}
       </Paper>
+      )}
     </Box>
   );
 }
