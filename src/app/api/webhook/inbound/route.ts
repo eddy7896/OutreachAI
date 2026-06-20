@@ -73,7 +73,6 @@ export async function POST(req: Request) {
               console.error('Error fetching full email from Resend:', error);
               emailData.text = `[DEBUG] Resend API Error: ${JSON.stringify(error, null, 2)}`;
             }
-            }
           } catch (err) {
             console.error('Failed to fetch full email body:', err);
           }
