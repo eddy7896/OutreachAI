@@ -1,0 +1,104 @@
+import { NextResponse } from 'next/server';
+import { fetchAll, createDocument, updateDocument } from '@/lib/firestore';
+import { Lead, Email } from '@/types';
+import { generateWithFallback } from '@/lib/ai';
+
+const CLASSIFICATION_PROMPT = `
+You are an expert B2B sales development representative (SDR) and email intent analyzer. Your objective is to read incoming email replies from cold outreach campaigns and classify the recipient's intent with absolute precision.
+
+You must output ONLY valid JSON. No markdown formatting, no conversational text before or after the JSON.
+
+### CLASSIFICATION CATEGORIES:
+You must categorize the email into exactly ONE of the following intents:
+1. "POSITIVE_INTEREST" - The prospect wants to book a call, asked for a demo, or expressed clear buying intent.
+2. "MORE_INFO_REQUESTED" - The prospect is slightly interested but needs specific questions answered (e.g., pricing, competitor comparisons, features) before committing.
+3. "NOT_INTERESTED" - The prospect explicitly said no, asked to be unsubscribed, or told you to stop emailing them.
+4. "OUT_OF_OFFICE" - Automated auto-responders indicating the person is away.
+5. "BOUNCE" - Mail delivery subsystem errors or "address not found" automated messages.
+6. "UNKNOWN" - The email is illegible, empty, or does not fit any category.
+
+### OUTPUT JSON SCHEMA:
+{
+  "intent": "EXACT_CATEGORY_STRING",
+  "summary": "A 1-sentence summary of what the prospect said.",
+  "action_required": true/false // True if a human needs to reply manually (e.g., questions, interest). False for OOO, bounces, or rejections.
+}
+
+### INCOMING EMAIL TO ANALYZE:
+`;
+
+export async function POST(req: Request) {
+  try {
+    // Resend Inbound Webhook Payload structure
+    // See: https://resend.com/docs/knowledge-base/how-to-receive-inbound-emails
+    const payload = await req.json();
+    
+    // Basic verification (in production you would verify the Resend signature)
+    if (!payload || !payload.from || !payload.text) {
+      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    }
+
+    const fromEmail = payload.from.toLowerCase();
+    const subject = payload.subject || 'No Subject';
+    const bodyText = payload.text;
+
+    // 1. Find the Lead by email
+    // Note: We use fetchAll here to query since we don't know the ID
+    // In a real server environment, we'd use admin SDK to query where('email', '==', fromEmail)
+    // For this MVP, we fetch all leads and find it. 
+    const allLeads = await fetchAll<Lead>('leads');
+    const lead = allLeads.find(l => l.email.toLowerCase().includes(fromEmail) || fromEmail.includes(l.email.toLowerCase()));
+
+    if (!lead) {
+      console.warn(`Received inbound email from unknown lead: ${fromEmail}`);
+      return NextResponse.json({ success: true, message: 'Lead not found, ignoring.' });
+    }
+
+    // 2. Classify the intent via Gemini or Fallback
+    const prompt = `${CLASSIFICATION_PROMPT}\n${bodyText}`;
+    
+    let intentData = {
+      intent: 'UNKNOWN',
+      summary: 'Failed to parse AI intent',
+      action_required: true
+    };
+
+    try {
+      intentData = await generateWithFallback(prompt, true);
+    } catch (err) {
+      console.error('Failed to classify inbound email:', err);
+    }
+
+    // 3. Create the inbound Email record
+    await createDocument<Email>('emails', {
+      leadId: lead.id,
+      campaignId: lead.campaignId,
+      direction: 'inbound',
+      subject: subject,
+      body: bodyText, // using raw text for MVP
+      status: 'delivered',
+      intent: intentData.intent as any,
+      intentSummary: intentData.summary,
+      actionRequired: intentData.action_required,
+    });
+
+    // 4. AUTOMATED CRM ROUTING: Update the Lead's status based on reply
+    let newStatus = lead.status;
+    if (intentData.intent === 'POSITIVE_INTEREST' || intentData.intent === 'MORE_INFO_REQUESTED') {
+      newStatus = 'replied'; // Or 'qualified' if you want
+    } else if (intentData.intent === 'NOT_INTERESTED') {
+      newStatus = 'lost';
+    } else if (intentData.intent !== 'BOUNCE' && intentData.intent !== 'OUT_OF_OFFICE') {
+      newStatus = 'replied'; // Default for other generic replies
+    }
+
+    if (newStatus !== lead.status) {
+      await updateDocument('leads', lead.id, { status: newStatus });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Error handling inbound webhook:', error);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+  }
+}

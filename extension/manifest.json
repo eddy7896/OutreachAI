@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Outreach AI Importer",
+  "version": "1.0",
+  "description": "Extract LinkedIn profiles and send them to your Outreach AI CRM.",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": ["https://*.linkedin.com/*", "http://localhost:3000/*", "https://*.vercel.app/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Outreach AI Importer"
+  }
+}
