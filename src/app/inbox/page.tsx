@@ -28,6 +28,7 @@ export default function InboxPage() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [thread, setThread] = useState<Email[]>([]);
   const [replyText, setReplyText] = useState('');
+  const [subjectText, setSubjectText] = useState('');
   const [sending, setSending] = useState(false);
   const [loadingLeads, setLoadingLeads] = useState(true);
   
@@ -107,6 +108,22 @@ export default function InboxPage() {
     }
   }, [thread, selectedLeadId, repliedLeads]);
 
+  // 4. Auto-populate subject line based on thread history
+  useEffect(() => {
+    if (thread.length > 0) {
+      const lastMsg = thread[thread.length - 1];
+      if (lastMsg.subject) {
+        if (lastMsg.subject.toLowerCase().startsWith('re:')) {
+          setSubjectText(lastMsg.subject);
+        } else {
+          setSubjectText(`Re: ${lastMsg.subject}`);
+        }
+      }
+    } else {
+      setSubjectText('');
+    }
+  }, [thread]);
+
   const handleSendReply = async () => {
     if (!replyText.trim() || !selectedLeadId) return;
     setSending(true);
@@ -120,7 +137,7 @@ export default function InboxPage() {
         leadId: selectedLeadId,
         campaignId: lead.campaignId,
         direction: 'outbound',
-        subject: `Re: Our previous conversation`, // Simplified for MVP
+        subject: subjectText || 'New Message',
         body: replyText,
         status: 'sent',
         createdAt: serverTimestamp(),
@@ -132,7 +149,7 @@ export default function InboxPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           to: lead.email,
-          subject: `Re: Our previous conversation`,
+          subject: subjectText || 'New Message',
           body: `<p>${replyText.replace(/\\n/g, '<br/>')}</p>`
         })
       });
@@ -260,6 +277,15 @@ export default function InboxPage() {
 
             {/* Compose */}
             <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                size="small"
+                label="Subject"
+                value={subjectText}
+                onChange={(e) => setSubjectText(e.target.value)}
+                sx={{ mb: 2 }}
+              />
               <Paper variant="outlined" sx={{ mb: 1 }}>
                 <RichTextToolbar onInsert={(text) => setReplyText(prev => prev + text)} />
                 <TextField
