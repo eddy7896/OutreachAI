@@ -4,6 +4,8 @@ import { Lead, Email } from '@/types';
 import { generateWithFallback } from '@/lib/ai';
 import { Resend } from 'resend';
 
+export const maxDuration = 60; // Allow up to 60 seconds for the LLM to process the email intent
+
 const resend = new Resend(process.env.RESEND_API_KEY || '');
 
 const CLASSIFICATION_PROMPT = `
