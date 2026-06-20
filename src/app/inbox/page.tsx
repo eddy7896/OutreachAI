@@ -180,9 +180,12 @@ export default function InboxPage() {
                     </Badge>
                   </ListItemAvatar>
                   <ListItemText 
-                    primary={`${lead.firstName} ${lead.lastName}`}
+                    primary={
+                      <Typography sx={{ fontWeight: lead.hasUnread ? 'bold' : 'normal' }}>
+                        {lead.firstName} {lead.lastName}
+                      </Typography>
+                    }
                     secondary={lead.company}
-                    primaryTypographyProps={{ fontWeight: lead.hasUnread ? 'bold' : 'normal' }}
                   />
                 </ListItemButton>
                 <Divider component="li" />
