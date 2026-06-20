@@ -220,7 +220,7 @@ export default function InboxPage() {
                       {showUnreadDivider && (
                         <Box ref={unreadRef} sx={{ width: '100%', my: 2 }}>
                           <Divider sx={{ '&::before, &::after': { borderColor: 'error.light' } }}>
-                            <Typography variant="caption" color="error.main" fontWeight="bold">New Unread Messages</Typography>
+                            <Typography variant="caption" color="error.main" sx={{ fontWeight: 'bold' }}>New Unread Messages</Typography>
                           </Divider>
                         </Box>
                       )}
