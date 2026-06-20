@@ -12,8 +12,10 @@ import { useLeads } from '@/hooks/useLeads';
 import { useProducts } from '@/hooks/useProducts';
 import { useTemplates } from '@/hooks/useTemplates';
 import { useSignatures } from '@/hooks/useSignatures';
+import { useSignatures } from '@/hooks/useSignatures';
 import { fetchOne, createDocument, updateDocument } from '@/lib/firestore';
 import { Lead, Product, EmailTemplate, Email } from '@/types';
+import { RichTextToolbar } from '@/components/ui/RichTextToolbar';
 
 function ComposeContent() {
   const searchParams = useSearchParams();
@@ -242,20 +244,23 @@ function ComposeContent() {
               sx={{ mb: 2, mt: 2 }}
             />
             
-            <TextField
-              fullWidth
-              label="Body (HTML)"
-              multiline
-              rows={15}
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              sx={{ flexGrow: 1, mb: 3 }}
-              slotProps={{
-                input: {
-                  sx: { alignItems: 'flex-start' }
-                }
-              }}
-            />
+            <Paper variant="outlined" sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', mb: 3 }}>
+              <RichTextToolbar onInsert={(text) => setBody(prev => prev + text)} />
+              <TextField
+                fullWidth
+                placeholder="Body (HTML)"
+                multiline
+                rows={15}
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                sx={{ flexGrow: 1, '& fieldset': { border: 'none' } }}
+                slotProps={{
+                  input: {
+                    sx: { alignItems: 'flex-start' }
+                  }
+                }}
+              />
+            </Paper>
 
             <Divider sx={{ mb: 2 }} />
             

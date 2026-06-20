@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useState } from 'react';
 import { Box, TextField, Button, Paper, Typography, MenuItem, Select, FormControl, InputLabel, Alert, Snackbar } from '@mui/material';
 import PlaceholderChips from './PlaceholderChips';
+import { RichTextToolbar } from '@/components/ui/RichTextToolbar';
 import { EmailTemplate } from '@/types';
 
 interface TemplateEditorProps {
@@ -92,17 +93,20 @@ export default function TemplateEditor({ initialData, onSubmit, isSubmitting, on
           sx={{ mb: 2 }}
         />
         
-        <TextField
-          fullWidth
-          label="Email Body (HTML/Text)"
-          required
-          multiline
-          rows={10}
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          sx={{ mb: 3 }}
-          helperText="You can use HTML tags like <p>, <br>, <strong> for formatting."
-        />
+        <Paper variant="outlined" sx={{ mb: 3 }}>
+          <RichTextToolbar onInsert={(text) => setBody(prev => prev + text)} />
+          <TextField
+            fullWidth
+            placeholder="Email Body (HTML/Text)"
+            required
+            multiline
+            rows={10}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            sx={{ '& fieldset': { border: 'none' } }}
+            helperText="You can use HTML tags like <p>, <br>, <strong> for formatting."
+          />
+        </Paper>
 
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
           <Button onClick={onCancel} disabled={isSubmitting}>

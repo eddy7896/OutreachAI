@@ -92,7 +92,8 @@ export async function POST(req: Request) {
     const fromEmail = emailData.from.toLowerCase();
     const subject = emailData.subject || 'No Subject';
     // The payload.data might contain text, html, or neither if it's just metadata
-    const bodyText = emailData.text || emailData.html || 'No body content available in payload';
+    const textForAI = emailData.text || emailData.html || 'No body content available in payload';
+    const htmlForUI = emailData.html || emailData.text || 'No body content available in payload';
 
     // 1. Find the Lead by email
     // Note: We use fetchAll here to query since we don't know the ID
@@ -107,7 +108,7 @@ export async function POST(req: Request) {
     }
 
     // 2. Classify the intent via Gemini or Fallback
-    const prompt = `${CLASSIFICATION_PROMPT}\n${bodyText}`;
+    const prompt = `${CLASSIFICATION_PROMPT}\n${textForAI}`;
     
     let intentData = {
       intent: 'UNKNOWN',
@@ -127,7 +128,9 @@ export async function POST(req: Request) {
       campaignId: lead.campaignId,
       direction: 'inbound',
       subject: subject,
-      body: bodyText, // using raw text for MVP
+      body: htmlForUI, // prefer HTML for the UI rendering
+      isRead: false, // mark as unread for the inbox UI
+
       status: 'delivered',
       intent: intentData.intent as any,
       intentSummary: intentData.summary,
@@ -144,9 +147,11 @@ export async function POST(req: Request) {
       newStatus = 'replied'; // Default for other generic replies
     }
 
-    if (newStatus !== lead.status) {
-      await updateDocument('leads', lead.id, { status: newStatus });
-    }
+    // Always flag as having unread messages and update status if needed
+    await updateDocument('leads', lead.id, { 
+      status: newStatus,
+      hasUnread: true
+    });
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

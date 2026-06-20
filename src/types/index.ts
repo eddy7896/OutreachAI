@@ -15,6 +15,7 @@ export interface Lead {
   campaignId?: string;
   currentSequenceNodeId?: string;
   sequenceLastActionAt?: Timestamp | Date;
+  hasUnread?: boolean;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }
@@ -93,6 +94,7 @@ export interface Email {
   sentAt?: Timestamp | Date;
   openedAt?: Timestamp | Date;
   opened?: boolean;
+  isRead?: boolean; // For tracking if the user has read inbound emails
   resendMessageId?: string;
   sequenceStep?: number;
   createdAt: Timestamp | Date;
