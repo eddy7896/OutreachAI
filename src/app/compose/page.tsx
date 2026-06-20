@@ -92,6 +92,44 @@ function ComposeContent() {
     }
   };
 
+  const handleLoadTemplateDirectly = () => {
+    if (!selectedLeadId || !selectedTemplateId) {
+      setError('Please select a Lead and a Base Template to load.');
+      return;
+    }
+    setError(null);
+    setSuccess(null);
+
+    const lead = leads.find(l => l.id === selectedLeadId);
+    const product = products.find(p => p.id === selectedProductId);
+    const template = templates.find(t => t.id === selectedTemplateId);
+
+    if (!lead || !template) return;
+
+    let loadedSubject = template.subject || '';
+    let loadedBody = template.body || '';
+
+    const variables: Record<string, string> = {
+      '{{firstName}}': lead.firstName || '',
+      '{{lastName}}': lead.lastName || '',
+      '{{company}}': lead.company || '',
+      '{{productName}}': product?.name || 'our product',
+    };
+
+    Object.keys(variables).forEach(key => {
+      const regex = new RegExp(key.replace(/\{/g, '\\{').replace(/\}/g, '\\}'), 'gi');
+      loadedSubject = loadedSubject.replace(regex, variables[key]);
+      loadedBody = loadedBody.replace(regex, variables[key]);
+    });
+
+    const defaultSig = signatures.find(s => s.isDefault) || signatures[0];
+    const signatureHtml = defaultSig ? `<br/><br/>${defaultSig.htmlContent}` : '';
+
+    setSubject(loadedSubject);
+    setBody(loadedBody + signatureHtml);
+    setSuccess('Template loaded directly! You can review and edit it below.');
+  };
+
   const handleSendOrSave = async (action: 'draft' | 'send') => {
     if (!selectedLeadId || !subject || !body) return;
     
@@ -224,8 +262,19 @@ function ComposeContent() {
               startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <AutoAwesome />}
               onClick={handleGenerate}
               disabled={isGenerating || !selectedLeadId || !selectedProductId}
+              sx={{ mb: 1 }}
             >
               {isGenerating ? 'Generating...' : 'Generate with AI'}
+            </Button>
+
+            <Button
+              fullWidth
+              variant="outlined"
+              color="secondary"
+              onClick={handleLoadTemplateDirectly}
+              disabled={isGenerating || !selectedLeadId || !selectedTemplateId}
+            >
+              Load Template Directly
             </Button>
           </Paper>
         </Grid>

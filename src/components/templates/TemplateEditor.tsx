@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { Box, TextField, Button, Paper, Typography, MenuItem, Select, FormControl, InputLabel, Alert, Snackbar } from '@mui/material';
+import { AutoAwesome } from '@mui/icons-material';
 import PlaceholderChips from './PlaceholderChips';
 import { RichTextToolbar } from '@/components/ui/RichTextToolbar';
 import { EmailTemplate } from '@/types';
@@ -21,12 +22,36 @@ export default function TemplateEditor({ initialData, onSubmit, isSubmitting, on
   const [category, setCategory] = useState<EmailTemplate['category']>(initialData?.category || 'cold_outreach');
   const [error, setError] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [aiIntent, setAiIntent] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const handlePlaceholderSelect = (placeholder: string) => {
     // We copy it to clipboard for the user to paste into the text area
     // since building a full rich text editor with native insertion is complex for MVP
     navigator.clipboard.writeText(placeholder);
     setSnackbarOpen(true);
+  };
+
+  const handleAIGenerate = async () => {
+    if (!aiIntent) return;
+    setIsGenerating(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/generate-template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ intent: aiIntent }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to generate template');
+      
+      setSubject(data.subject);
+      setBody(data.body);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,6 +104,34 @@ export default function TemplateEditor({ initialData, onSubmit, isSubmitting, on
               <MenuItem value="custom">Custom</MenuItem>
             </Select>
           </FormControl>
+        </Box>
+
+        <Box sx={{ mb: 4, p: 3, bgcolor: 'primary.50', borderRadius: 2, border: '1px solid', borderColor: 'primary.100' }}>
+          <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AutoAwesome color="primary" /> AI Template Assistant
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Describe the intent or goal of your email, and the AI will generate the subject and body using dynamic placeholders.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="e.g. Write a breakup email offering our new CRM tool"
+              value={aiIntent}
+              onChange={(e) => setAiIntent(e.target.value)}
+              disabled={isGenerating}
+              sx={{ bgcolor: 'white' }}
+            />
+            <Button 
+              variant="contained" 
+              onClick={handleAIGenerate} 
+              disabled={isGenerating || !aiIntent}
+              sx={{ whiteSpace: 'nowrap' }}
+            >
+              {isGenerating ? 'Generating...' : 'Generate with AI'}
+            </Button>
+          </Box>
         </Box>
 
         <Typography variant="h6" gutterBottom>Content</Typography>
