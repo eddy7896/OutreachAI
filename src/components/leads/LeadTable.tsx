@@ -89,7 +89,7 @@ export default function LeadTable({ leads, onDelete, loading }: LeadTableProps) 
                     {lead.firstName.charAt(0)}{lead.lastName.charAt(0)}
                   </Avatar>
                   <Box>
-                    <Typography variant="subtitle1" fontWeight="bold">
+                    <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                       {lead.firstName} {lead.lastName}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
