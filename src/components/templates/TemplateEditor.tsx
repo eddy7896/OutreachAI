@@ -107,7 +107,7 @@ export default function TemplateEditor({ initialData, onSubmit, isSubmitting, on
         </Box>
 
         <Box sx={{ mb: 4, p: 3, bgcolor: 'primary.50', borderRadius: 2, border: '1px solid', borderColor: 'primary.100' }}>
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, fontWeight: 'bold' }}>
             <AutoAwesome color="primary" /> AI Template Assistant
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
