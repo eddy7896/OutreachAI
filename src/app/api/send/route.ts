@@ -16,6 +16,7 @@ export async function POST(req: Request) {
     // Fetch the settings to get the dynamic sender email
     const settings = await fetchOne<AppSettings>('settings', 'global');
     const senderEmail = settings?.profile?.senderEmail;
+    const replyToEmail = settings?.profile?.replyToEmail;
 
     let fromEmail = 'onboarding@resend.dev';
     if (senderEmail) {
@@ -24,9 +25,12 @@ export async function POST(req: Request) {
       fromEmail = 'hello@yourdomain.com'; // fallback if no setting exists
     }
 
+    const senderName = settings?.profile?.name || 'Outreach AI';
+
     const data = await resend.emails.send({
-      from: `Outreach AI <${fromEmail}>`,
+      from: `${senderName} <${fromEmail}>`,
       to: [to],
+      ...(replyToEmail ? { reply_to: replyToEmail } : {}),
       subject: subject,
       html: body,
     });

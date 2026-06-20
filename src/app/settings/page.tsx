@@ -14,6 +14,7 @@ export default function SettingsPage() {
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [senderEmail, setSenderEmail] = React.useState('');
+  const [replyToEmail, setReplyToEmail] = React.useState('');
   const [company, setCompany] = React.useState('');
   
   const [emailAlerts, setEmailAlerts] = React.useState(false);
@@ -32,6 +33,7 @@ export default function SettingsPage() {
       setName(settings.profile.name);
       setEmail(settings.profile.email);
       setSenderEmail(settings.profile.senderEmail || '');
+      setReplyToEmail(settings.profile.replyToEmail || '');
       setCompany(settings.profile.company);
       
       setEmailAlerts(settings.preferences.emailAlerts);
@@ -47,7 +49,7 @@ export default function SettingsPage() {
     setError(null);
     try {
       await updateSettings({
-        profile: { name, email, company, senderEmail },
+        profile: { name, email, company, senderEmail, replyToEmail },
         preferences: { emailAlerts, inAppNotifications },
         apiKeys: { resendApiKey, geminiApiKey },
         updatedAt: new Date()
@@ -106,7 +108,17 @@ export default function SettingsPage() {
                   type="email" 
                   value={senderEmail} 
                   onChange={(e) => setSenderEmail(e.target.value)} 
-                  helperText="The email address you verified on Resend to send campaigns from"
+                  helperText="The email address you send campaigns from (e.g., khushi@easyio.tech)"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField 
+                  fullWidth 
+                  label="Reply-To Email" 
+                  type="email" 
+                  value={replyToEmail} 
+                  onChange={(e) => setReplyToEmail(e.target.value)} 
+                  helperText="Where you want prospect replies to go (e.g., khushi@outreach.easyio.tech)"
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>

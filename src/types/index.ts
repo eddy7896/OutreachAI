@@ -127,6 +127,7 @@ export interface AppSettings {
     email: string;
     company: string;
     senderEmail?: string;
+    replyToEmail?: string;
   };
   preferences: {
     emailAlerts: boolean;

@@ -41,10 +41,10 @@ export default function ClassifyPage() {
 
   return (
     <Box>
-      <Typography variant="h4" fontWeight="bold" mb={1}>
+      <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1 }}>
         Intent Classification
       </Typography>
-      <Typography color="text.secondary" mb={4}>
+      <Typography color="text.secondary" sx={{ mb: 4 }}>
         Analyze incoming email replies to determine the prospect's intent automatically.
       </Typography>
 
