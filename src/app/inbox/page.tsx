@@ -18,7 +18,7 @@ import {
   Badge,
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import { collection, query, where, onSnapshot, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Lead, Email } from '@/types';
 import { RichTextToolbar } from '@/components/ui/RichTextToolbar';
