@@ -133,7 +133,7 @@ export default function InboxPage() {
         body: JSON.stringify({
           to: lead.email,
           subject: `Re: Our previous conversation`,
-          html: `<p>${replyText.replace(/\\n/g, '<br/>')}</p>`
+          body: `<p>${replyText.replace(/\\n/g, '<br/>')}</p>`
         })
       });
 
