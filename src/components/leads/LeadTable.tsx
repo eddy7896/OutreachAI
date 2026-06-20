@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Chip, IconButton, Tooltip, useTheme, useMediaQuery, Box, Card, CardContent, Typography, Avatar, Divider } from '@mui/material';
+import { Chip, IconButton, Tooltip, useTheme, useMediaQuery, Box, Card, CardContent, Typography, Avatar, Divider, Button } from '@mui/material';
 import { Delete as DeleteIcon, Edit as EditIcon, Send as SendIcon, Email as EmailIcon, Business as BusinessIcon } from '@mui/icons-material';
 import { Lead } from '@/types';
 import { useRouter } from 'next/navigation';
