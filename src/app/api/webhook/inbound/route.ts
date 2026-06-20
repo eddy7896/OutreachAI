@@ -60,7 +60,7 @@ export async function POST(req: Request) {
         // The event payload only contains metadata. We must fetch the full email body using the SDK.
         if (emailData?.email_id) {
           try {
-            const { data, error } = await resend.emails.get(emailData.email_id);
+            const { data, error } = await resend.emails.receiving.get(emailData.email_id);
             if (data) {
               emailData.text = data.text || '';
               emailData.html = data.html || '';
