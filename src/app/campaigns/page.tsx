@@ -76,20 +76,20 @@ export default function CampaignsPage() {
                   <Typography variant="body2" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', mb: 2 }}>
                     {campaign.description}
                   </Typography>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: 'background.default', p: 1.5, borderRadius: 1 }}>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="caption" color="text.secondary" display="block">Sent</Typography>
-                      <Typography variant="subtitle2">{campaign.stats.sent}</Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', bgcolor: 'background.default', p: 1.5, borderRadius: 1 }}>
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Sent</Typography>
+                        <Typography variant="subtitle2">{campaign.stats.sent}</Typography>
+                      </Box>
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Replies</Typography>
+                        <Typography variant="subtitle2">{campaign.stats.replied}</Typography>
+                      </Box>
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>Positive</Typography>
+                        <Typography variant="subtitle2" color="success.main">{campaign.stats.positive}</Typography>
+                      </Box>
                     </Box>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="caption" color="text.secondary" display="block">Replies</Typography>
-                      <Typography variant="subtitle2">{campaign.stats.replied}</Typography>
-                    </Box>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography variant="caption" color="text.secondary" display="block">Positive</Typography>
-                      <Typography variant="subtitle2" color="success.main">{campaign.stats.positive}</Typography>
-                    </Box>
-                  </Box>
                 </CardContent>
                 <CardActions>
                   <Button size="small" onClick={() => router.push(`/campaigns/${campaign.id}`)}>Manage</Button>
