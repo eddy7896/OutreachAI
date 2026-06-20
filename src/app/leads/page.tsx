@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useState } from 'react';
-import { Box, Typography, Button, Alert } from '@mui/material';
+import { Box, Typography, Button, Alert, TextField, Autocomplete, Paper } from '@mui/material';
 import { CloudUpload as CloudUploadIcon, Add as AddIcon } from '@mui/icons-material';
 import { useLeads } from '@/hooks/useLeads';
 import LeadTable from '@/components/leads/LeadTable';
@@ -17,6 +17,32 @@ export default function LeadsPage() {
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [companyFilter, setCompanyFilter] = useState<string | null>(null);
+  const [industryFilter, setIndustryFilter] = useState<string | null>(null);
+
+  const uniqueCompanies = React.useMemo(() => {
+    return Array.from(new Set(leads.map(l => l.company).filter(Boolean))).sort();
+  }, [leads]);
+
+  const uniqueIndustries = React.useMemo(() => {
+    return Array.from(new Set(leads.map(l => l.industry).filter(Boolean))).sort();
+  }, [leads]);
+
+  const filteredLeads = React.useMemo(() => {
+    return leads.filter(lead => {
+      const matchSearch = !searchQuery || 
+        `${lead.firstName} ${lead.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (lead.jobTitle || '').toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchCompany = !companyFilter || lead.company === companyFilter;
+      const matchIndustry = !industryFilter || lead.industry === industryFilter;
+      
+      return matchSearch && matchCompany && matchIndustry;
+    });
+  }, [leads, searchQuery, companyFilter, industryFilter]);
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this lead?')) {
@@ -90,7 +116,39 @@ export default function LeadsPage() {
         </Alert>
       )}
 
-      <LeadTable leads={leads} loading={loading} onDelete={handleDelete} />
+      <Paper sx={{ p: 2, mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+        <TextField
+          size="small"
+          label="Search names, emails, titles..."
+          variant="outlined"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{ minWidth: 250, flexGrow: 1 }}
+        />
+        <Autocomplete
+          size="small"
+          options={uniqueCompanies}
+          value={companyFilter}
+          onChange={(e, newValue) => setCompanyFilter(newValue)}
+          renderInput={(params) => <TextField {...params} label="Filter by Company" />}
+          sx={{ minWidth: 200 }}
+        />
+        <Autocomplete
+          size="small"
+          options={uniqueIndustries}
+          value={industryFilter}
+          onChange={(e, newValue) => setIndustryFilter(newValue)}
+          renderInput={(params) => <TextField {...params} label="Filter by Industry" />}
+          sx={{ minWidth: 200 }}
+        />
+        {(searchQuery || companyFilter || industryFilter) && (
+          <Button onClick={() => { setSearchQuery(''); setCompanyFilter(null); setIndustryFilter(null); }}>
+            Clear Filters
+          </Button>
+        )}
+      </Paper>
+
+      <LeadTable leads={filteredLeads} loading={loading} onDelete={handleDelete} />
 
       <LeadImportDialog 
         open={importDialogOpen} 

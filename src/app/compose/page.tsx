@@ -25,6 +25,7 @@ function ComposeContent() {
   const { templates, loading: templatesLoading } = useTemplates();
   const { signatures } = useSignatures();
 
+  const [selectedCompany, setSelectedCompany] = useState<string>('');
   const [selectedLeadId, setSelectedLeadId] = useState<string>(initialLeadId || '');
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
@@ -36,18 +37,33 @@ function ComposeContent() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Pre-select product if lead has a target product that matches
+  // Pre-select product and company if lead is available
   useEffect(() => {
-    if (selectedLeadId && leads.length > 0 && products.length > 0) {
+    if (selectedLeadId && leads.length > 0) {
       const lead = leads.find(l => l.id === selectedLeadId);
-      if (lead && lead.targetProduct) {
-        const product = products.find(p => p.name.toLowerCase().includes(lead.targetProduct.toLowerCase()));
-        if (product && !selectedProductId) {
-          setSelectedProductId(product.id);
+      if (lead) {
+        if (!selectedCompany && lead.company) {
+          setSelectedCompany(lead.company);
+        }
+        if (lead.targetProduct && products.length > 0) {
+          const product = products.find(p => p.name.toLowerCase().includes(lead.targetProduct.toLowerCase()));
+          if (product && !selectedProductId) {
+            setSelectedProductId(product.id);
+          }
         }
       }
     }
-  }, [selectedLeadId, leads, products, selectedProductId]);
+  }, [selectedLeadId, leads, products, selectedProductId, selectedCompany]);
+
+  const uniqueCompanies = React.useMemo(() => {
+    const companies = leads.map(l => l.company).filter(Boolean);
+    return Array.from(new Set(companies)).sort();
+  }, [leads]);
+
+  const filteredLeads = React.useMemo(() => {
+    if (!selectedCompany) return leads;
+    return leads.filter(l => l.company === selectedCompany);
+  }, [leads, selectedCompany]);
 
   const handleGenerate = async () => {
     if (!selectedLeadId || !selectedProductId) {
@@ -210,15 +226,35 @@ function ComposeContent() {
             <Typography variant="h6" gutterBottom>Context Setup</Typography>
             
             <FormControl fullWidth sx={{ mb: 3, mt: 2 }}>
-              <InputLabel>Select Lead *</InputLabel>
+              <InputLabel>Select Company</InputLabel>
+              <Select
+                value={selectedCompany}
+                label="Select Company"
+                onChange={(e) => {
+                  setSelectedCompany(e.target.value);
+                  setSelectedLeadId(''); // reset lead when company changes
+                }}
+              >
+                <MenuItem value=""><em>All Companies</em></MenuItem>
+                {uniqueCompanies.map(company => (
+                  <MenuItem key={company} value={company}>
+                    {company}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth sx={{ mb: 3 }}>
+              <InputLabel>Select Contact *</InputLabel>
               <Select
                 value={selectedLeadId}
-                label="Select Lead *"
+                label="Select Contact *"
                 onChange={(e) => setSelectedLeadId(e.target.value)}
+                disabled={filteredLeads.length === 0}
               >
-                {leads.map(lead => (
+                {filteredLeads.map(lead => (
                   <MenuItem key={lead.id} value={lead.id}>
-                    {lead.firstName} {lead.lastName} ({lead.company})
+                    {lead.firstName} {lead.lastName} {!selectedCompany ? `(${lead.company})` : ''}
                   </MenuItem>
                 ))}
               </Select>
