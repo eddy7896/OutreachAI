@@ -12,7 +12,6 @@ import { useLeads } from '@/hooks/useLeads';
 import { useProducts } from '@/hooks/useProducts';
 import { useTemplates } from '@/hooks/useTemplates';
 import { useSignatures } from '@/hooks/useSignatures';
-import { useSignatures } from '@/hooks/useSignatures';
 import { fetchOne, createDocument, updateDocument } from '@/lib/firestore';
 import { Lead, Product, EmailTemplate, Email } from '@/types';
 import { RichTextToolbar } from '@/components/ui/RichTextToolbar';
