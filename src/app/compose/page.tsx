@@ -11,6 +11,7 @@ import { AutoAwesome, Send as SendIcon } from '@mui/icons-material';
 import { useLeads } from '@/hooks/useLeads';
 import { useProducts } from '@/hooks/useProducts';
 import { useTemplates } from '@/hooks/useTemplates';
+import { useSignatures } from '@/hooks/useSignatures';
 import { fetchOne, createDocument, updateDocument } from '@/lib/firestore';
 import { Lead, Product, EmailTemplate, Email } from '@/types';
 
@@ -21,6 +22,7 @@ function ComposeContent() {
   const { leads, loading: leadsLoading } = useLeads();
   const { products, loading: productsLoading } = useProducts();
   const { templates, loading: templatesLoading } = useTemplates();
+  const { signatures } = useSignatures();
 
   const [selectedLeadId, setSelectedLeadId] = useState<string>(initialLeadId || '');
   const [selectedProductId, setSelectedProductId] = useState<string>('');
@@ -76,8 +78,11 @@ function ComposeContent() {
 
       if (!response.ok) throw new Error(data.error || 'Failed to generate email');
 
+      const defaultSig = signatures.find(s => s.isDefault);
+      const signatureHtml = defaultSig ? `<br/><br/>${defaultSig.htmlContent}` : '';
+
       setSubject(data.subject || '');
-      setBody(data.body || '');
+      setBody((data.body || '') + signatureHtml);
       setSuccess('Draft generated successfully! You can review and edit it below.');
     } catch (err: any) {
       setError(err.message);

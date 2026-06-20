@@ -22,6 +22,8 @@ import {
   AccountTree,
   BarChart,
   Inbox,
+  Send,
+  Draw,
 } from '@mui/icons-material';
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -35,8 +37,10 @@ const menuItems = [
   { text: 'Templates', icon: <Description />, path: '/templates' },
   { text: 'Compose', icon: <EditNote />, path: '/compose' },
   { text: 'Inbox', icon: <Inbox />, path: '/inbox' },
+  { text: 'Outbox', icon: <Send />, path: '/outbox' },
   { text: 'Campaigns', icon: <Campaign />, path: '/campaigns' },
   { text: 'Sequences', icon: <AccountTree />, path: '/sequences' },
+  { text: 'Signatures', icon: <Draw />, path: '/signatures' },
   { text: 'Analytics', icon: <BarChart />, path: '/analytics' },
 ];
 

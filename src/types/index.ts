@@ -140,3 +140,12 @@ export interface AppSettings {
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }
+
+export interface Signature {
+  id: string;
+  name: string;
+  htmlContent: string;
+  isDefault: boolean;
+  createdAt: Timestamp | Date;
+  updatedAt: Timestamp | Date;
+}

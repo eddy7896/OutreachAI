@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchAll, fetchOne, createDocument, updateDocument } from '@/lib/firestore';
-import { Campaign, Lead, Sequence, SequenceNode, Product, EmailTemplate, Email } from '@/types';
+import { Campaign, Lead, Sequence, SequenceNode, Product, EmailTemplate, Email, Signature } from '@/types';
 import { Resend } from 'resend';
 
 // Vercel Cron routes can optionally verify a secret header to prevent unauthorized runs
@@ -24,6 +24,10 @@ export async function GET(req: Request) {
     const allSequences = await fetchAll<Sequence>('sequences');
     const allProducts = await fetchAll<Product>('products');
     const allTemplates = await fetchAll<EmailTemplate>('templates');
+    const allSignatures = await fetchAll<Signature>('signatures');
+
+    const defaultSignature = allSignatures.find(s => s.isDefault);
+    const signatureHtml = defaultSignature ? `<br/><br/>${defaultSignature.htmlContent}` : '';
 
     // 2. Find active campaigns with sequences
     const activeCampaigns = allCampaigns.filter(c => c.status === 'active' && c.sequenceId);
@@ -132,9 +136,9 @@ export async function GET(req: Request) {
                   opened: false,
                 });
 
-                // 3. Append pixel and Send
+                // 3. Append signature, pixel, and Send
                 const trackingPixel = `<img src="${origin}/api/track?emailId=${newEmail.id}" width="1" height="1" alt="" />`;
-                const finalBody = genData.body + trackingPixel;
+                const finalBody = genData.body + signatureHtml + trackingPixel;
 
                 const sendResponse = await fetch(`${origin}/api/send`, {
                   method: 'POST',

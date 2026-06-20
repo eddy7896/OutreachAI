@@ -32,7 +32,27 @@ export async function POST(req: Request) {
     // Resend Inbound Webhook Payload structure
     // See: https://resend.com/docs/knowledge-base/how-to-receive-inbound-emails
     const payload = await req.json();
+
+    // Handle Resend Event Webhooks (e.g., email.opened, email.bounced)
+    if (payload.type) {
+      if (payload.type === 'email.opened') {
+        const resendMessageId = payload.data?.email_id;
+        if (resendMessageId) {
+          const allEmails = await fetchAll<Email>('emails');
+          const emailDoc = allEmails.find(e => e.resendMessageId === resendMessageId);
+          if (emailDoc && !emailDoc.opened) {
+             await updateDocument('emails', emailDoc.id, {
+                opened: true,
+                openedAt: new Date()
+             });
+          }
+        }
+      }
+      // Always return 200 OK for valid Resend events so the webhook doesn't fail
+      return NextResponse.json({ success: true });
+    }
     
+    // Handle Resend Inbound Email Webhook (Raw parsed email)
     // Basic verification (in production you would verify the Resend signature)
     if (!payload || !payload.from || !payload.text) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
