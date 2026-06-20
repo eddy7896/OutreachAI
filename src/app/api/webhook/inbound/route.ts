@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { fetchAll, createDocument, updateDocument } from '@/lib/firestore';
 import { Lead, Email } from '@/types';
 import { generateWithFallback } from '@/lib/ai';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY || '');
 
 const CLASSIFICATION_PROMPT = `
 You are an expert B2B sales development representative (SDR) and email intent analyzer. Your objective is to read incoming email replies from cold outreach campaigns and classify the recipient's intent with absolute precision.
@@ -53,6 +56,21 @@ export async function POST(req: Request) {
       } else if (payload.type === 'email.received') {
         // Resend sends inbound emails wrapped in an event structure if configured via Webhooks
         emailData = payload.data;
+        
+        // The event payload only contains metadata. We must fetch the full email body using the SDK.
+        if (emailData?.email_id) {
+          try {
+            const { data, error } = await resend.emails.get(emailData.email_id);
+            if (data) {
+              emailData.text = data.text;
+              emailData.html = data.html;
+            } else if (error) {
+              console.error('Error fetching full email from Resend:', error);
+            }
+          } catch (err) {
+            console.error('Failed to fetch full email body:', err);
+          }
+        }
       } else {
         // Always return 200 OK for other Resend events so the webhook doesn't fail
         return NextResponse.json({ success: true });
