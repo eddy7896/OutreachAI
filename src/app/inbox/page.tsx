@@ -74,7 +74,7 @@ export default function InboxPage() {
 
     try {
       // Create outbound email document
-      await addDoc(collection(db, 'emails'), {
+      const newEmailRef = await addDoc(collection(db, 'emails'), {
         leadId: selectedLeadId,
         campaignId: lead.campaignId,
         direction: 'outbound',
@@ -85,7 +85,7 @@ export default function InboxPage() {
       });
 
       // Call API to actually send email via Resend (would be connected to real /api/send)
-      await fetch('/api/send', {
+      const res = await fetch('/api/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -94,6 +94,13 @@ export default function InboxPage() {
           html: `<p>${replyText.replace(/\\n/g, '<br/>')}</p>`
         })
       });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.messageId) {
+          await updateDoc(newEmailRef, { resendMessageId: data.messageId });
+        }
+      }
 
       setReplyText('');
     } catch (error) {

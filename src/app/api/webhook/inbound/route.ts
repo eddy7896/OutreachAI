@@ -48,7 +48,7 @@ export async function POST(req: Request) {
           if (emailDoc && !emailDoc.opened) {
              await updateDocument('emails', emailDoc.id, {
                 opened: true,
-                openedAt: new Date()
+                openedAt: new Date().toISOString()
              });
           }
         }
@@ -62,10 +62,17 @@ export async function POST(req: Request) {
           try {
             const { data, error } = await resend.emails.get(emailData.email_id);
             if (data) {
-              emailData.text = data.text;
-              emailData.html = data.html;
+              emailData.text = data.text || '';
+              emailData.html = data.html || '';
+              
+              // DEBUG: If both are empty, log the entire payload so we can see what Resend gave us
+              if (!emailData.text && !emailData.html) {
+                 emailData.text = `[DEBUG] Resend API returned: ${JSON.stringify(data, null, 2)}`;
+              }
             } else if (error) {
               console.error('Error fetching full email from Resend:', error);
+              emailData.text = `[DEBUG] Resend API Error: ${JSON.stringify(error, null, 2)}`;
+            }
             }
           } catch (err) {
             console.error('Failed to fetch full email body:', err);
