@@ -7,6 +7,7 @@ import {
   Paper,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   ListItemAvatar,
   Avatar,
@@ -120,8 +121,7 @@ export default function InboxPage() {
           ) : (
             repliedLeads.map((lead) => (
               <React.Fragment key={lead.id}>
-                <ListItem 
-                  button 
+                <ListItemButton 
                   selected={selectedLeadId === lead.id}
                   onClick={() => setSelectedLeadId(lead.id)}
                 >
@@ -132,7 +132,7 @@ export default function InboxPage() {
                     primary={`${lead.firstName} ${lead.lastName}`}
                     secondary={lead.company}
                   />
-                </ListItem>
+                </ListItemButton>
                 <Divider component="li" />
               </React.Fragment>
             ))
