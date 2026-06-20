@@ -33,34 +33,22 @@ export default function OutboxPage() {
     // 2. Fetch outbound emails
     const q = query(
       collection(db, 'emails'),
-      where('direction', '==', 'outbound'),
-      orderBy('createdAt', 'desc')
+      where('direction', '==', 'outbound')
     );
     
     const emailsUnsubscribe = onSnapshot(q, (snapshot) => {
       const emailData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OutboundEmail));
+      emailData.sort((a, b) => {
+        const timeA = a.createdAt ? (a.createdAt as any).toMillis() : 0;
+        const timeB = b.createdAt ? (b.createdAt as any).toMillis() : 0;
+        return timeB - timeA;
+      });
       setEmails(emailData);
       setLoading(false);
     }, (err) => {
       console.error("Error fetching outbound emails:", err);
-      // Fallback for missing index:
-      if (err.message.includes('index')) {
-        // Fetch without order, sort in memory
-        const qFallback = query(collection(db, 'emails'), where('direction', '==', 'outbound'));
-        onSnapshot(qFallback, (snap) => {
-           const data = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as OutboundEmail));
-           data.sort((a, b) => {
-             const timeA = a.createdAt ? (a.createdAt as any).toMillis() : 0;
-             const timeB = b.createdAt ? (b.createdAt as any).toMillis() : 0;
-             return timeB - timeA;
-           });
-           setEmails(data);
-           setLoading(false);
-        });
-      } else {
-        setError(err.message);
-        setLoading(false);
-      }
+      setError(err.message);
+      setLoading(false);
     });
 
     return () => {

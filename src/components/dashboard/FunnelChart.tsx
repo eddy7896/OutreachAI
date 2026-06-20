@@ -34,7 +34,7 @@ export default function FunnelChart() {
           Outreach Funnel
         </Typography>
         <Box sx={{ height: 300, width: '100%', mt: 2 }}>
-          <ResponsiveContainer>
+          <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
               layout="vertical"
