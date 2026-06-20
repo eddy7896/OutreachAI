@@ -87,7 +87,7 @@ export default function SequenceEditorPage() {
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.push('/sequences')} sx={{ mb: 2 }}>
           Back to Sequences
         </Button>
-        <Typography variant="h4" fontWeight="bold">
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
           {isNew ? 'Create New Sequence' : 'Edit Sequence'}
         </Typography>
         <Typography color="text.secondary">

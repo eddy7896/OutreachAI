@@ -19,7 +19,7 @@ export default function SequencesPage() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold">Outreach Sequences</Typography>
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Outreach Sequences</Typography>
         <Button
           variant="contained"
           color="primary"
@@ -46,7 +46,7 @@ export default function SequencesPage() {
           <Typography variant="h6" color="text.secondary" gutterBottom>
             No sequences found
           </Typography>
-          <Typography color="text.secondary" mb={3}>
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
             Build an A/B flow logic tree for follow-ups.
           </Typography>
           <Button variant="outlined" onClick={() => router.push('/sequences/new')}>

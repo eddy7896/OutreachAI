@@ -11,7 +11,7 @@ export default function DashboardPage() {
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold">Dashboard</Typography>
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Dashboard</Typography>
         <Typography color="text.secondary">
           Overview of your outreach performance and intent analysis.
         </Typography>

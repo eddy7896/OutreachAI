@@ -20,7 +20,7 @@ export default function ProductsPage() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold">Product Registry</Typography>
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Product Registry</Typography>
         <Button
           variant="contained"
           color="primary"
@@ -46,7 +46,7 @@ export default function ProductsPage() {
           <Typography variant="h6" color="text.secondary" gutterBottom>
             No products found
           </Typography>
-          <Typography color="text.secondary" mb={3}>
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
             Add a product to provide AI context for email generation.
           </Typography>
           <Button variant="outlined" onClick={() => router.push('/products/new')}>

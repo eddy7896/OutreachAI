@@ -85,7 +85,7 @@ export default function LeadEditorPage() {
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.push('/leads')} sx={{ mb: 2 }}>
           Back to Leads
         </Button>
-        <Typography variant="h4" fontWeight="bold">
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
           {isNew ? 'Add New Lead' : 'Edit Lead'}
         </Typography>
         <Typography color="text.secondary">

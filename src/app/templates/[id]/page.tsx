@@ -85,7 +85,7 @@ export default function TemplateEditorPage() {
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.push('/templates')} sx={{ mb: 2 }}>
           Back to Templates
         </Button>
-        <Typography variant="h4" fontWeight="bold">
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
           {isNew ? 'Create New Template' : 'Edit Template'}
         </Typography>
         <Typography color="text.secondary">

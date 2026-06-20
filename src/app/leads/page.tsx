@@ -52,7 +52,7 @@ export default function LeadsPage() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold">Lead Management</Typography>
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Lead Management</Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant="outlined"

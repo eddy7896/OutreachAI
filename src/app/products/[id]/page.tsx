@@ -85,7 +85,7 @@ export default function ProductEditorPage() {
         <Button startIcon={<ArrowBackIcon />} onClick={() => router.push('/products')} sx={{ mb: 2 }}>
           Back to Products
         </Button>
-        <Typography variant="h4" fontWeight="bold">
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
           {isNew ? 'Create New Product' : 'Edit Product'}
         </Typography>
         <Typography color="text.secondary">

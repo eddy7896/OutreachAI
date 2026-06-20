@@ -150,7 +150,7 @@ function ComposeContent() {
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight="bold">Compose Email</Typography>
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>Compose Email</Typography>
         <Typography color="text.secondary">
           Select a lead and product, then let AI generate a highly personalized email.
         </Typography>
