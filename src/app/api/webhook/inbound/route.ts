@@ -33,7 +33,9 @@ export async function POST(req: Request) {
     // See: https://resend.com/docs/knowledge-base/how-to-receive-inbound-emails
     const payload = await req.json();
 
-    // Handle Resend Event Webhooks (e.g., email.opened, email.bounced)
+    // Handle Resend Event Webhooks (e.g., email.opened, email.bounced, email.received)
+    let emailData = payload;
+
     if (payload.type) {
       if (payload.type === 'email.opened') {
         const resendMessageId = payload.data?.email_id;
@@ -47,20 +49,26 @@ export async function POST(req: Request) {
              });
           }
         }
+        return NextResponse.json({ success: true });
+      } else if (payload.type === 'email.received') {
+        // Resend sends inbound emails wrapped in an event structure if configured via Webhooks
+        emailData = payload.data;
+      } else {
+        // Always return 200 OK for other Resend events so the webhook doesn't fail
+        return NextResponse.json({ success: true });
       }
-      // Always return 200 OK for valid Resend events so the webhook doesn't fail
-      return NextResponse.json({ success: true });
     }
     
     // Handle Resend Inbound Email Webhook (Raw parsed email)
     // Basic verification (in production you would verify the Resend signature)
-    if (!payload || !payload.from || !payload.text) {
-      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    if (!emailData || !emailData.from) {
+      return NextResponse.json({ error: 'Invalid payload missing from address' }, { status: 400 });
     }
 
-    const fromEmail = payload.from.toLowerCase();
-    const subject = payload.subject || 'No Subject';
-    const bodyText = payload.text;
+    const fromEmail = emailData.from.toLowerCase();
+    const subject = emailData.subject || 'No Subject';
+    // The payload.data might contain text, html, or neither if it's just metadata
+    const bodyText = emailData.text || emailData.html || 'No body content available in payload';
 
     // 1. Find the Lead by email
     // Note: We use fetchAll here to query since we don't know the ID
