@@ -16,19 +16,8 @@ export default function PendingActionsNotifier() {
       Notification.requestPermission();
     }
 
-    // Simulate checking database for "draft" emails that need attention
-    const timer = setTimeout(() => {
-      setOpen(true);
-      
-      // Also send a desktop notification if allowed
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Outreach AI - Pending Actions', {
-          body: 'You have 3 draft emails that need to be sent manually.',
-        });
-      }
-    }, 3000);
-
-    return () => clearTimeout(timer);
+    // The simulated notification timer has been disabled to prevent annoying popups.
+    // In the future, this should actually query Firestore for real drafts.
   }, []);
 
   const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
