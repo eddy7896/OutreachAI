@@ -165,7 +165,7 @@ export default function LeadTable({ leads, onDelete, loading, onSelectionChange,
         disableRowSelectionOnClick
         onRowSelectionModelChange={(newSelectionModel) => {
           if (onSelectionChange) {
-            onSelectionChange(Array.from(newSelectionModel).map(id => String(id)));
+            onSelectionChange((newSelectionModel as any[]).map(id => String(id)));
           }
         }}
         rowSelectionModel={selectedIds}
