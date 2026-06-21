@@ -54,7 +54,7 @@ export async function POST(request: Request) {
         
         if (!currentNode) continue; // Sequence might have changed or ended
 
-        let nextNodeId = currentNodeId;
+        let nextNodeId: string | null = currentNodeId;
         let actionTaken = false;
 
         const lastActionDate = lead.sequenceLastActionAt 
