@@ -8,6 +8,7 @@ import { useLeads } from '@/hooks/useLeads';
 import LeadTable from '@/components/leads/LeadTable';
 import LeadImportDialog from '@/components/leads/LeadImportDialog';
 import BulkCompanyDialog from '@/components/leads/BulkCompanyDialog';
+import BulkCampaignDialog from '@/components/leads/BulkCampaignDialog';
 import { Lead } from '@/types';
 import { useRouter } from 'next/navigation';
 
@@ -16,8 +17,10 @@ export default function LeadsPage() {
   const { leads, loading, error, removeLead, addLead } = useLeads();
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
+  const [bulkCampaignDialogOpen, setBulkCampaignDialogOpen] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
 
+  const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState<string | null>(null);
   const [industryFilter, setIndustryFilter] = useState<string | null>(null);
@@ -148,7 +151,29 @@ export default function LeadsPage() {
         )}
       </Paper>
 
-      <LeadTable leads={filteredLeads} loading={loading} onDelete={handleDelete} />
+      {selectedLeadIds.length > 0 && (
+        <Paper sx={{ p: 2, mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+            {selectedLeadIds.length} lead(s) selected
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button variant="contained" color="secondary" onClick={() => setBulkCampaignDialogOpen(true)}>
+              Add to Campaign
+            </Button>
+            <Button variant="outlined" color="inherit" onClick={() => setSelectedLeadIds([])}>
+              Clear Selection
+            </Button>
+          </Box>
+        </Paper>
+      )}
+
+      <LeadTable 
+        leads={filteredLeads} 
+        loading={loading} 
+        onDelete={handleDelete} 
+        onSelectionChange={setSelectedLeadIds}
+        selectedIds={selectedLeadIds}
+      />
 
       <LeadImportDialog 
         open={importDialogOpen} 
@@ -163,6 +188,15 @@ export default function LeadsPage() {
           // A full refresh or triggering useLeads refetch would go here.
           // For now, reloading the page is the simplest way to see the new data immediately
           window.location.reload();
+        }}
+      />
+
+      <BulkCampaignDialog
+        open={bulkCampaignDialogOpen}
+        onClose={() => setBulkCampaignDialogOpen(false)}
+        selectedLeadIds={selectedLeadIds}
+        onSuccess={() => {
+          setSelectedLeadIds([]);
         }}
       />
     </Box>

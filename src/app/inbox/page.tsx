@@ -17,8 +17,11 @@ import {
   CircularProgress,
   Badge,
   useTheme,
-  useMediaQuery,
-  IconButton
+  IconButton,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -35,15 +38,16 @@ export default function InboxPage() {
   const [subjectText, setSubjectText] = useState('');
   const [sending, setSending] = useState(false);
   const [loadingLeads, setLoadingLeads] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string>('All');
   
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
   const unreadRef = React.useRef<HTMLDivElement>(null);
 
-  // 1. Fetch leads that have replied
+  // 1. Fetch leads that have been contacted or replied
   useEffect(() => {
-    const q = query(collection(db, 'leads'), where('status', 'in', ['replied', 'qualified']));
+    const q = query(collection(db, 'leads'), where('status', 'in', ['contacted', 'replied', 'qualified', 'converted']));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const leadsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Lead));
       setRepliedLeads(leadsData);
@@ -179,21 +183,48 @@ export default function InboxPage() {
 
   const selectedLead = repliedLeads.find(l => l.id === selectedLeadId);
 
+  const filteredLeads = repliedLeads.filter(lead => {
+    if (statusFilter === 'All') return true;
+    return lead.contactStatus === statusFilter;
+  });
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!selectedLead) return;
+    try {
+      await updateDoc(doc(db, 'leads', selectedLead.id), { contactStatus: newStatus });
+    } catch (e) {
+      console.error('Failed to update status', e);
+    }
+  };
+
+  const statusOptions = ['First Contact', 'Follow Up 1', 'Follow Up 2', 'Replied', 'Meeting Booked', 'Not Interested'];
+
   return (
     <Box sx={{ display: 'flex', height: { xs: 'calc(100vh - 80px)', md: 'calc(100vh - 100px)' }, gap: { xs: 0, md: 2 } }}>
       {/* LEFT PANE: Leads List */}
       {(!isMobile || !selectedLeadId) && (
         <Paper sx={{ width: { xs: '100%', md: 300 }, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-            <Typography variant="h6">Inbox</Typography>
+            <Typography variant="h6" sx={{ mb: 2 }}>Inbox</Typography>
+            <FormControl fullWidth size="small">
+              <InputLabel>Filter by Status</InputLabel>
+              <Select
+                value={statusFilter}
+                label="Filter by Status"
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <MenuItem value="All">All Contacts</MenuItem>
+                {statusOptions.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+              </Select>
+            </FormControl>
           </Box>
         <List sx={{ flex: 1, overflow: 'auto' }}>
           {loadingLeads ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress size={24} /></Box>
-          ) : repliedLeads.length === 0 ? (
-            <Box sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>No replied leads yet.</Box>
+          ) : filteredLeads.length === 0 ? (
+            <Box sx={{ p: 2, textAlign: 'center', color: 'text.secondary' }}>No leads found.</Box>
           ) : (
-            repliedLeads.map((lead) => (
+            filteredLeads.map((lead) => (
               <React.Fragment key={lead.id}>
                 <ListItemButton 
                   selected={selectedLeadId === lead.id}
@@ -234,9 +265,23 @@ export default function InboxPage() {
                       <ArrowBackIcon />
                     </IconButton>
                   )}
-                  <Typography variant="h6">{selectedLead.firstName} {selectedLead.lastName}</Typography>
+                  <Box>
+                    <Typography variant="h6">{selectedLead.firstName} {selectedLead.lastName}</Typography>
+                    <Typography variant="body2" color="text.secondary">{selectedLead.email}</Typography>
+                  </Box>
                 </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>{selectedLead.email}</Typography>
+                <Box>
+                  <FormControl size="small" sx={{ minWidth: 150 }}>
+                    <InputLabel>Status Tag</InputLabel>
+                    <Select
+                      value={selectedLead.contactStatus || ''}
+                      label="Status Tag"
+                      onChange={(e) => handleStatusChange(e.target.value)}
+                    >
+                      {statusOptions.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                </Box>
               </Box>
 
             {/* Thread */}

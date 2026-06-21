@@ -2,8 +2,31 @@
 
 import * as React from 'react';
 import { useState } from 'react';
-import { Box, TextField, Button, Paper, Typography, FormControl, InputLabel, Select, MenuItem, Alert } from '@mui/material';
+import { Box, TextField, Button, Paper, Typography, FormControl, InputLabel, Select, MenuItem, Alert, Checkbox, ListItemText, OutlinedInput } from '@mui/material';
 import { Campaign, Product, EmailTemplate, Sequence } from '@/types';
+
+const DAYS_OF_WEEK = [
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
+  { value: 0, label: 'Sunday' },
+];
+
+const TIMEZONES = [
+  'America/Los_Angeles',
+  'America/Denver',
+  'America/Chicago',
+  'America/New_York',
+  'Europe/London',
+  'Europe/Berlin',
+  'Asia/Kolkata',
+  'Asia/Tokyo',
+  'Australia/Sydney',
+  'UTC'
+];
 
 interface CampaignFormProps {
   initialData?: Partial<Campaign>;
@@ -23,6 +46,12 @@ export default function CampaignForm({ initialData, products, templates, sequenc
   const [templateId, setTemplateId] = useState(initialData?.templateId || '');
   const [sequenceId, setSequenceId] = useState(initialData?.sequenceId || '');
   const [status, setStatus] = useState<Campaign['status']>(initialData?.status || 'draft');
+  
+  const [timezone, setTimezone] = useState(initialData?.timezone || 'America/New_York');
+  const [startHour, setStartHour] = useState(initialData?.scheduleWindow?.startHour ?? 9);
+  const [endHour, setEndHour] = useState(initialData?.scheduleWindow?.endHour ?? 17);
+  const [days, setDays] = useState<number[]>(initialData?.scheduleWindow?.days || [1, 2, 3, 4, 5]);
+
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,6 +71,8 @@ export default function CampaignForm({ initialData, products, templates, sequenc
         industry,
         templateId,
         sequenceId,
+        timezone,
+        scheduleWindow: { startHour, endHour, days },
         status,
       });
     } catch (err: any) {
@@ -126,6 +157,67 @@ export default function CampaignForm({ initialData, products, templates, sequenc
               <MenuItem value=""><em>None</em></MenuItem>
               {sequences.map(s => (
                 <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
+        <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Scheduling & Timezone</Typography>
+        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+          <FormControl fullWidth>
+            <InputLabel>Timezone</InputLabel>
+            <Select
+              value={timezone}
+              label="Timezone"
+              onChange={(e) => setTimezone(e.target.value)}
+            >
+              {TIMEZONES.map(tz => (
+                <MenuItem key={tz} value={tz}>{tz}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth>
+            <InputLabel>Sending Days</InputLabel>
+            <Select
+              multiple
+              value={days}
+              onChange={(e) => setDays(typeof e.target.value === 'string' ? e.target.value.split(',').map(Number) : e.target.value as number[])}
+              input={<OutlinedInput label="Sending Days" />}
+              renderValue={(selected) => selected.map(val => DAYS_OF_WEEK.find(d => d.value === val)?.label.substring(0, 3)).join(', ')}
+            >
+              {DAYS_OF_WEEK.map((day) => (
+                <MenuItem key={day.value} value={day.value}>
+                  <Checkbox checked={days.indexOf(day.value) > -1} />
+                  <ListItemText primary={day.label} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
+        <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
+          <FormControl fullWidth>
+            <InputLabel>Start Time (Hour 0-23)</InputLabel>
+            <Select
+              value={startHour}
+              label="Start Time (Hour 0-23)"
+              onChange={(e) => setStartHour(Number(e.target.value))}
+            >
+              {Array.from({ length: 24 }).map((_, i) => (
+                <MenuItem key={i} value={i}>{i === 0 ? 'Midnight' : i < 12 ? `${i} AM` : i === 12 ? 'Noon' : `${i-12} PM`}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth>
+            <InputLabel>End Time (Hour 0-23)</InputLabel>
+            <Select
+              value={endHour}
+              label="End Time (Hour 0-23)"
+              onChange={(e) => setEndHour(Number(e.target.value))}
+            >
+              {Array.from({ length: 24 }).map((_, i) => (
+                <MenuItem key={i} value={i}>{i === 0 ? 'Midnight' : i < 12 ? `${i} AM` : i === 12 ? 'Noon' : `${i-12} PM`}</MenuItem>
               ))}
             </Select>
           </FormControl>

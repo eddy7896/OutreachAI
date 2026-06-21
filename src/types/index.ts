@@ -12,6 +12,7 @@ export interface Lead {
   targetProduct: string;
   remarks: string;
   status: 'new' | 'contacted' | 'replied' | 'qualified' | 'lost' | 'converted';
+  contactStatus?: 'First Contact' | 'Follow Up 1' | 'Follow Up 2' | 'Replied' | 'Meeting Booked' | 'Not Interested' | string;
   campaignId?: string;
   currentSequenceNodeId?: string;
   sequenceLastActionAt?: Timestamp | Date;
@@ -28,6 +29,12 @@ export interface Campaign {
   industry?: string;
   templateId?: string;
   sequenceId?: string;
+  timezone?: string;
+  scheduleWindow?: {
+    startHour: number; // e.g. 9 for 9 AM
+    endHour: number;   // e.g. 17 for 5 PM
+    days: number[];    // e.g. [1,2,3,4,5] for Mon-Fri
+  };
   status: 'draft' | 'active' | 'paused' | 'completed';
   stats: {
     totalLeads: number;

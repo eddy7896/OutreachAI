@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { Chip, IconButton, Tooltip, useTheme, useMediaQuery, Box, Card, CardContent, Typography, Avatar, Divider, Button } from '@mui/material';
+import { Chip, IconButton, Tooltip, useTheme, useMediaQuery, Box, Card, CardContent, Typography, Avatar, Divider, Button, Checkbox } from '@mui/material';
 import { Delete as DeleteIcon, Edit as EditIcon, Send as SendIcon, Email as EmailIcon, Business as BusinessIcon } from '@mui/icons-material';
 import { Lead } from '@/types';
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,8 @@ interface LeadTableProps {
   leads: Lead[];
   onDelete: (id: string) => void;
   loading: boolean;
+  onSelectionChange?: (selectedIds: string[]) => void;
+  selectedIds?: string[];
 }
 
 const statusColors: Record<string, 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'> = {
@@ -22,7 +24,7 @@ const statusColors: Record<string, 'default' | 'primary' | 'secondary' | 'error'
   converted: 'success'
 };
 
-export default function LeadTable({ leads, onDelete, loading }: LeadTableProps) {
+export default function LeadTable({ leads, onDelete, loading, onSelectionChange, selectedIds = [] }: LeadTableProps) {
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -85,6 +87,18 @@ export default function LeadTable({ leads, onDelete, loading }: LeadTableProps) 
             <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                  {onSelectionChange && (
+                    <Checkbox 
+                      checked={selectedIds.includes(lead.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          onSelectionChange([...selectedIds, lead.id]);
+                        } else {
+                          onSelectionChange(selectedIds.filter(id => id !== lead.id));
+                        }
+                      }}
+                    />
+                  )}
                   <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
                     {lead.firstName.charAt(0)}{lead.lastName.charAt(0)}
                   </Avatar>
@@ -147,8 +161,14 @@ export default function LeadTable({ leads, onDelete, loading }: LeadTableProps) 
           },
         }}
         pageSizeOptions={[5, 10, 25, 50]}
-        checkboxSelection
+        checkboxSelection={!!onSelectionChange}
         disableRowSelectionOnClick
+        onRowSelectionModelChange={(newSelectionModel) => {
+          if (onSelectionChange) {
+            onSelectionChange(newSelectionModel as string[]);
+          }
+        }}
+        rowSelectionModel={selectedIds}
       />
     </div>
   );

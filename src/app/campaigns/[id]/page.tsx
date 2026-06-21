@@ -36,6 +36,7 @@ export default function CampaignEditorPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (isNew) return;
@@ -128,6 +129,22 @@ export default function CampaignEditorPage() {
     }
   };
 
+  const handleProcessSequence = async () => {
+    if (!campaign) return;
+    setIsProcessing(true);
+    try {
+      const res = await fetch(`/api/cron/process-sequences?campaignId=${campaign.id}`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to process sequences');
+      alert(`Processed sequences: ${data.processedCount} leads updated.`);
+    } catch (err: any) {
+      console.error(err);
+      alert('Error processing sequences: ' + err.message);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   if (loading || productsLoading || templatesLoading || sequencesLoading || (isNew ? false : leadsLoading)) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
@@ -203,6 +220,15 @@ export default function CampaignEditorPage() {
               onClick={() => setEditModalOpen(true)}
             >
               Edit Settings
+            </Button>
+            <Button 
+              variant="outlined" 
+              color="secondary"
+              startIcon={isProcessing ? <CircularProgress size={20} color="inherit"/> : <PlayArrowIcon />} 
+              disabled={isProcessing || campaign?.status !== 'active'}
+              onClick={handleProcessSequence}
+            >
+              {isProcessing ? 'Processing...' : 'Process Sequences'}
             </Button>
             <Button 
               variant="contained" 
