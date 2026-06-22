@@ -168,7 +168,7 @@ export default function LeadTable({ leads, onDelete, loading, onSelectionChange,
             onSelectionChange((newSelectionModel as unknown as string[]).map(id => String(id)));
           }
         }}
-        rowSelectionModel={selectedIds}
+        rowSelectionModel={selectedIds as any}
       />
     </div>
   );

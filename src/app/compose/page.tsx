@@ -19,6 +19,7 @@ import { RichTextToolbar } from '@/components/ui/RichTextToolbar';
 function ComposeContent() {
   const searchParams = useSearchParams();
   const initialLeadId = searchParams.get('leadId');
+  const draftId = searchParams.get('draftId');
 
   const { leads, loading: leadsLoading } = useLeads();
   const { products, loading: productsLoading } = useProducts();
@@ -36,6 +37,27 @@ function ComposeContent() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const [editingEmailId, setEditingEmailId] = useState<string | null>(draftId);
+
+  // Load draft if draftId is provided
+  useEffect(() => {
+    if (draftId && leads.length > 0) {
+      const loadDraft = async () => {
+        try {
+          const draftEmail = await fetchOne<Email>('emails', draftId);
+          if (draftEmail) {
+            setSelectedLeadId(draftEmail.leadId);
+            setSubject(draftEmail.subject || '');
+            setBody(draftEmail.body || '');
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      loadDraft();
+    }
+  }, [draftId, leads]);
 
   // Pre-select product and company if lead is available
   useEffect(() => {
@@ -158,19 +180,33 @@ function ComposeContent() {
       let resendMessageId = undefined;
       let finalBody = body;
 
-      // 1. Create the Email document first to get an ID
-      const newEmail = await createDocument<Email>('emails', {
-        leadId: selectedLeadId,
-        direction: 'outbound',
-        subject,
-        body: finalBody,
-        status: action === 'send' ? 'sent' : 'draft',
-        opened: false,
-      });
+      let emailId = editingEmailId;
+
+      if (emailId) {
+        // Update existing draft
+        await updateDocument<Email>('emails', emailId, {
+          leadId: selectedLeadId,
+          subject,
+          body: finalBody,
+          status: action === 'send' ? 'sent' : 'draft',
+        });
+      } else {
+        // Create the Email document first to get an ID
+        const newEmail = await createDocument<Email>('emails', {
+          leadId: selectedLeadId,
+          direction: 'outbound',
+          subject,
+          body: finalBody,
+          status: action === 'send' ? 'sent' : 'draft',
+          opened: false,
+        });
+        emailId = newEmail.id;
+        setEditingEmailId(emailId);
+      }
       
       if (action === 'send') {
         // 2. Append tracking pixel with the generated email ID
-        const trackingPixel = `<img src="${window.location.origin}/api/track?emailId=${newEmail.id}" width="1" height="1" alt="" />`;
+        const trackingPixel = `<img src="${window.location.origin}/api/track?emailId=${emailId}" width="1" height="1" alt="" />`;
         finalBody = body + trackingPixel;
 
         // 3. Send via Resend
@@ -189,7 +225,7 @@ function ComposeContent() {
         resendMessageId = data.messageId;
 
         // 4. Update the document with final body (including pixel) and resend ID
-        await updateDocument<Email>('emails', newEmail.id, {
+        await updateDocument<Email>('emails', emailId, {
           body: finalBody,
           resendMessageId,
         });

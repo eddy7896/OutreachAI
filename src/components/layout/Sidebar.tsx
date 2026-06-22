@@ -23,6 +23,7 @@ import {
   BarChart,
   Inbox,
   Send,
+  Drafts as DraftsIcon,
   Draw,
 } from '@mui/icons-material';
 import { usePathname, useRouter } from 'next/navigation';
@@ -36,6 +37,7 @@ const menuItems = [
   { text: 'Classify', icon: <Email />, path: '/classify' },
   { text: 'Templates', icon: <Description />, path: '/templates' },
   { text: 'Compose', icon: <EditNote />, path: '/compose' },
+  { text: 'Drafts', icon: <DraftsIcon />, path: '/drafts' },
   { text: 'Inbox', icon: <Inbox />, path: '/inbox' },
   { text: 'Outbox', icon: <Send />, path: '/outbox' },
   { text: 'Campaigns', icon: <Campaign />, path: '/campaigns' },
