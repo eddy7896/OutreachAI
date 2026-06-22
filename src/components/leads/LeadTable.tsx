@@ -163,12 +163,12 @@ export default function LeadTable({ leads, onDelete, loading, onSelectionChange,
         pageSizeOptions={[5, 10, 25, 50]}
         checkboxSelection={!!onSelectionChange}
         disableRowSelectionOnClick
-        onRowSelectionModelChange={(newSelectionModel) => {
-          if (onSelectionChange) {
-            onSelectionChange((newSelectionModel as unknown as string[]).map(id => String(id)));
+        onRowSelectionModelChange={(newSelectionModel: any) => {
+          if (onSelectionChange && newSelectionModel?.ids) {
+            onSelectionChange(Array.from(newSelectionModel.ids).map(id => String(id)));
           }
         }}
-        rowSelectionModel={selectedIds as any}
+        rowSelectionModel={{ type: 'include', ids: new Set(selectedIds) } as any}
       />
     </div>
   );
