@@ -27,6 +27,7 @@ export interface Campaign {
   description: string;
   targetProduct: string;
   industry?: string;
+  targetCompanies?: string[];
   templateId?: string;
   sequenceId?: string;
   timezone?: string;

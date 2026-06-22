@@ -33,16 +33,17 @@ interface CampaignFormProps {
   products: Product[];
   templates: EmailTemplate[];
   sequences: Sequence[];
+  companies?: string[];
   onSubmit: (data: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt' | 'stats'>) => Promise<void>;
   isSubmitting: boolean;
   onCancel: () => void;
 }
 
-export default function CampaignForm({ initialData, products, templates, sequences, onSubmit, isSubmitting, onCancel }: CampaignFormProps) {
+export default function CampaignForm({ initialData, products, templates, sequences, companies = [], onSubmit, isSubmitting, onCancel }: CampaignFormProps) {
   const [name, setName] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [targetProduct, setTargetProduct] = useState(initialData?.targetProduct || '');
-  const [industry, setIndustry] = useState(initialData?.industry || '');
+  const [targetCompanies, setTargetCompanies] = useState<string[]>(initialData?.targetCompanies || []);
   const [templateId, setTemplateId] = useState(initialData?.templateId || '');
   const [sequenceId, setSequenceId] = useState(initialData?.sequenceId || '');
   const [status, setStatus] = useState<Campaign['status']>(initialData?.status || 'draft');
@@ -68,7 +69,7 @@ export default function CampaignForm({ initialData, products, templates, sequenc
         name,
         description,
         targetProduct,
-        industry,
+        targetCompanies,
         templateId,
         sequenceId,
         timezone,
@@ -122,13 +123,23 @@ export default function CampaignForm({ initialData, products, templates, sequenc
             </Select>
           </FormControl>
 
-          <TextField
-            fullWidth
-            label="Target Industry (Optional)"
-            value={industry}
-            onChange={(e) => setIndustry(e.target.value)}
-            helperText="To filter leads"
-          />
+          <FormControl fullWidth>
+            <InputLabel>Target Companies</InputLabel>
+            <Select
+              multiple
+              value={targetCompanies}
+              onChange={(e) => setTargetCompanies(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[])}
+              input={<OutlinedInput label="Target Companies" />}
+              renderValue={(selected) => selected.join(', ')}
+            >
+              {companies.map((company) => (
+                <MenuItem key={company} value={company}>
+                  <Checkbox checked={targetCompanies.indexOf(company) > -1} />
+                  <ListItemText primary={company} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
 
         <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Outreach Strategy</Typography>

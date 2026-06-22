@@ -25,7 +25,7 @@ export default function CampaignEditorPage() {
   const isNew = id === 'new';
 
   const { addCampaign, updateCampaign } = useCampaigns();
-  const { leads, loading: leadsLoading, removeLead } = useLeads();
+  const { leads, loading: leadsLoading, removeLead, updateLead } = useLeads();
   const { products, loading: productsLoading } = useProducts();
   const { templates, loading: templatesLoading } = useTemplates();
   const { sequences, loading: sequencesLoading } = useSequences();
@@ -59,16 +59,35 @@ export default function CampaignEditorPage() {
     loadCampaign();
   }, [id, isNew]);
 
+  const uniqueCompanies = React.useMemo(() => {
+    const companies = leads.map(l => l.company).filter(Boolean);
+    return Array.from(new Set(companies)).sort();
+  }, [leads]);
+
   const handleSubmit = async (data: Omit<Campaign, 'id' | 'createdAt' | 'updatedAt' | 'stats'>) => {
     setIsSubmitting(true);
     try {
+      let campaignId = id;
       if (isNew) {
-        await addCampaign(data);
-        router.push('/campaigns');
+        const newCamp = await addCampaign(data);
+        campaignId = newCamp.id;
       } else {
         await updateCampaign(id, data);
         setCampaign(prev => prev ? { ...prev, ...data } : null);
         setEditModalOpen(false);
+      }
+
+      // Auto-assign leads if targetCompanies are selected
+      if (data.targetCompanies && data.targetCompanies.length > 0) {
+        const leadsToUpdate = leads.filter(
+          l => data.targetCompanies!.includes(l.company) && l.campaignId !== campaignId
+        );
+        // Wait for all updates
+        await Promise.all(leadsToUpdate.map(l => updateLead(l.id, { campaignId })));
+      }
+
+      if (isNew) {
+        router.push('/campaigns');
       }
     } catch (err: any) {
       console.error(err);
@@ -180,6 +199,7 @@ export default function CampaignEditorPage() {
           products={products}
           templates={templates}
           sequences={sequences}
+          companies={uniqueCompanies}
           onSubmit={handleSubmit} 
           isSubmitting={isSubmitting}
           onCancel={() => router.push('/campaigns')}
@@ -294,6 +314,7 @@ export default function CampaignEditorPage() {
               products={products}
               templates={templates}
               sequences={sequences}
+              companies={uniqueCompanies}
               onSubmit={handleSubmit} 
               isSubmitting={isSubmitting}
               onCancel={() => setEditModalOpen(false)}
