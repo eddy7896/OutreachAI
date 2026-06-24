@@ -290,7 +290,7 @@ export default function AnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis tickFormatter={(tick) => `${tick}%`} />
-                  <RechartsTooltip formatter={(value: number) => `${value}%`} />
+                  <RechartsTooltip formatter={(value: any) => `${value}%`} />
                   <Legend />
                   <Bar dataKey="Open Rate %" fill="#00C49F" />
                   <Bar dataKey="Reply Rate %" fill="#FFBB28" />
