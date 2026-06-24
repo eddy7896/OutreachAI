@@ -139,7 +139,7 @@ export default function GuidesPage() {
   const renderCards = (items: any[], color: "primary" | "secondary" | "success" | "warning") => (
     <Grid container spacing={3}>
       {items.map((item, index) => (
-        <Grid item xs={12} md={6} lg={4} key={index}>
+        <Grid size={{ xs: 12, md: 6, lg: 4 }} key={index}>
           <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', borderTop: 4, borderColor: `${color}.main` }}>
             <CardContent sx={{ flexGrow: 1 }}>
               <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
