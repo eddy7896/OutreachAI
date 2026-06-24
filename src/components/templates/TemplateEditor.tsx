@@ -10,19 +10,20 @@ import { EmailTemplate } from '@/types';
 
 interface TemplateEditorProps {
   initialData?: Partial<EmailTemplate>;
+  preset?: string;
   onSubmit: (data: Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
   isSubmitting: boolean;
   onCancel: () => void;
 }
 
-export default function TemplateEditor({ initialData, onSubmit, isSubmitting, onCancel }: TemplateEditorProps) {
+export default function TemplateEditor({ initialData, preset, onSubmit, isSubmitting, onCancel }: TemplateEditorProps) {
   const [name, setName] = useState(initialData?.name || '');
   const [subject, setSubject] = useState(initialData?.subject || '');
   const [body, setBody] = useState(initialData?.body || '');
   const [category, setCategory] = useState<EmailTemplate['category']>(initialData?.category || 'cold_outreach');
   const [error, setError] = useState<string | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [aiIntent, setAiIntent] = useState('');
+  const [aiIntent, setAiIntent] = useState(preset || '');
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handlePlaceholderSelect = (placeholder: string) => {

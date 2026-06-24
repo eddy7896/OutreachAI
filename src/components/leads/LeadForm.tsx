@@ -12,10 +12,12 @@ import {
   Grid,
   InputAdornment,
   IconButton,
-  Tooltip
+  Tooltip,
+  Autocomplete
 } from '@mui/material';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { Lead } from '@/types';
+import { INDUSTRIES } from '@/utils/constants';
 
 interface LeadFormProps {
   initialData?: Lead;
@@ -199,12 +201,20 @@ export default function LeadForm({ initialData, onSubmit, isSubmitting, onCancel
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label="Industry"
-              name="industry"
+            <Autocomplete
+              freeSolo
+              options={INDUSTRIES}
               value={formData.industry}
-              onChange={handleChange}
+              onChange={(e, newValue) => setFormData(prev => ({ ...prev, industry: newValue || '' }))}
+              onInputChange={(e, newInputValue) => setFormData(prev => ({ ...prev, industry: newInputValue || '' }))}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Industry"
+                  name="industry"
+                  fullWidth
+                />
+              )}
             />
           </Grid>
 

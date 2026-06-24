@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { Box, Typography, CircularProgress, Alert, Button } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import TemplateEditor from '@/components/templates/TemplateEditor';
@@ -15,6 +15,8 @@ export default function TemplateEditorPage() {
   const params = useParams();
   const id = params.id as string;
   const isNew = id === 'new';
+  const searchParams = useSearchParams();
+  const preset = searchParams.get('preset');
 
   const { addTemplate, updateTemplate } = useTemplates();
   const [initialData, setInitialData] = useState<EmailTemplate | null>(null);
@@ -95,6 +97,7 @@ export default function TemplateEditorPage() {
 
       <TemplateEditor 
         initialData={initialData || undefined} 
+        preset={preset || undefined}
         onSubmit={handleSubmit} 
         isSubmitting={isSubmitting}
         onCancel={() => router.push('/templates')}

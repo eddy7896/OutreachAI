@@ -2,8 +2,9 @@
 
 import * as React from 'react';
 import { useState } from 'react';
-import { Box, TextField, Button, Paper, Typography, FormControl, InputLabel, Select, MenuItem, Alert, Checkbox, ListItemText, OutlinedInput } from '@mui/material';
+import { Box, TextField, Button, Paper, Typography, FormControl, InputLabel, Select, MenuItem, Alert, Checkbox, ListItemText, OutlinedInput, Autocomplete } from '@mui/material';
 import { Campaign, Product, EmailTemplate, Sequence } from '@/types';
+import { INDUSTRIES } from '@/utils/constants';
 
 const DAYS_OF_WEEK = [
   { value: 1, label: 'Monday' },
@@ -43,6 +44,7 @@ export default function CampaignForm({ initialData, products, templates, sequenc
   const [name, setName] = useState(initialData?.name || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [targetProduct, setTargetProduct] = useState(initialData?.targetProduct || '');
+  const [industry, setIndustry] = useState(initialData?.industry || '');
   const [targetCompanies, setTargetCompanies] = useState<string[]>(initialData?.targetCompanies || []);
   const [templateId, setTemplateId] = useState(initialData?.templateId || '');
   const [sequenceId, setSequenceId] = useState(initialData?.sequenceId || '');
@@ -69,6 +71,7 @@ export default function CampaignForm({ initialData, products, templates, sequenc
         name,
         description,
         targetProduct,
+        industry,
         targetCompanies,
         templateId,
         sequenceId,
@@ -122,6 +125,23 @@ export default function CampaignForm({ initialData, products, templates, sequenc
               ))}
             </Select>
           </FormControl>
+
+          <Autocomplete
+            freeSolo
+            options={INDUSTRIES}
+            value={industry}
+            onChange={(e, newValue) => setIndustry(newValue || '')}
+            onInputChange={(e, newInputValue) => setIndustry(newInputValue || '')}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Target Industry (Optional)"
+                helperText="To filter leads"
+                fullWidth
+              />
+            )}
+            sx={{ width: '100%' }}
+          />
 
           <FormControl fullWidth>
             <InputLabel>Target Companies</InputLabel>
