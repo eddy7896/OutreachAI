@@ -22,6 +22,8 @@ An intelligent, automated B2B sales development platform built with Next.js and 
 - **Fallback AI:** OpenRouter (Mistral, Llama 3)
 - **Data Enrichment:** Hunter.io & Apollo.io
 
+> 📚 **System documentation** (architecture, as-built context, analysis, drift, evals): see [`docs/`](docs/README.md). Run `npm run check:system` to detect doc/code drift.
+
 ---
 
 ## 💻 Local Setup & Installation

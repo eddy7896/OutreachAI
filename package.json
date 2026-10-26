@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:system": "node scripts/system-checks.mjs",
+    "eval": "node scripts/run-evals.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
