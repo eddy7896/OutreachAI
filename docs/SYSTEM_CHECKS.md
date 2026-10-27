@@ -6,10 +6,14 @@
 
 | Check | Command | Network | Current result (2026-10-26) |
 |---|---|---|---|
-| Type check | `npx tsc --noEmit` | no | ✅ pass |
-| Lint | `npm run lint` (`eslint`) | no | ❌ 90 errors / 33 warnings |
+| Type check | `npm run typecheck` | no | ✅ pass |
+| Unit tests | `npm test` (vitest) | no | ✅ 41 passed, 1 todo |
+| Branch / PR conventions | `node scripts/validate-branch.mjs`, `scripts/validate-pr-title.mjs` | no | ✅ (see [BRANCHING.md](./BRANCHING.md)) |
+| Lint | `npm run lint` (`eslint`) | no | ❌ 90 errors / 33 warnings (backlog) |
+| Lint budget | `npm run lint:budget` | no | ✅ at budget (90 / 33); fails on any increase |
 | Build | `npm run build` | no | ❌ without `RESEND_API_KEY`. ✅ with any non-empty value |
-| **Drift & invariants** | `npm run check:system` | no | ❌ 6 errors / 20 warnings / 14 info |
+| **Drift & invariants** | `npm run check:system` | no | ❌ 6 errors / 20 warnings / 14 info (full report) |
+| Drift & invariants vs baseline | `npm run check:system:ci` | no | ✅ 0 new errors; fails on anything not in `scripts/system-checks.baseline.json` |
 | AI evals | `npm run eval` | **yes** (AI providers) | not yet baselined (needs keys) |
 | Connectivity | `node test-conn.mjs`, `node list-models.mjs` | yes | manual; reads `.env.local` |
 
@@ -58,29 +62,17 @@ Every ERROR is a real, verified defect, documented in [SYSTEM_ANALYSIS.md §3](.
 ### Known limits
 Regex-based, not AST-based, so it can miss contracts expressed differently (e.g. a lookup through a helper function). Treat a clean run as necessary, not sufficient. Extend it when you add a new string-keyed contract. Better still, centralize the contract in `src/lib/contracts.ts` and make the check assert that literals are imported from there.
 
-## 3. Suggested CI (GitHub Actions)
+## 3. CI (GitHub Actions)
 
-```yaml
-name: checks
-on: [pull_request]
-jobs:
-  static:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
-      - run: npm ci
-      - run: npx tsc --noEmit
-      - run: npm run check:system
-      - run: npm run lint            # enable once the backlog is cleared
-      - run: npm run build
-        env: { RESEND_API_KEY: re_ci_dummy }
-  evals:                              # only when AI code changes; needs repo secrets
-    if: contains(github.event.pull_request.labels.*.name, 'ai-change')
-    runs-on: ubuntu-latest
-    steps: [ "...start app with secrets, then: BASE_URL=http://localhost:3000 npm run eval" ]
-```
+`.github/workflows/ci.yml` runs on **every push to any branch and every pull request**:
+
+| Job | Steps |
+|---|---|
+| Branch & PR conventions | branch name; PR title (Conventional Commits); PR targets `main` |
+| Typecheck, tests & checks | `npm ci` → `typecheck` → `test` → `check:system:ci` → `lint:budget` |
+| Production build | `npm ci` → `next build` (with a placeholder `RESEND_API_KEY` until PR 0.2) |
+
+The same checks run locally through `npm run validate` and the pre-push hook (`.githooks/pre-push`). Branch rules, ratchets and the GitHub settings to enable are in [BRANCHING.md](./BRANCHING.md). AI evals stay manual (`npm run eval`) because they need provider keys and cost quota.
 
 ## 4. Manual operational checks (pre-release / weekly)
 

@@ -3,8 +3,8 @@
  * Static system checks: drift between docs/config and code, and cross-module
  * invariants that the type system cannot catch (string-keyed contracts).
  *
- * Usage:  node scripts/system-checks.mjs [--json]
- * Exit:   1 if any ERROR-level finding, else 0.
+ * Usage:  node scripts/system-checks.mjs [--json] [--baseline <file>] [--write-baseline <file>]
+ * Exit:   1 if any ERROR-level finding (not listed in --baseline), else 0.
  *
  * No dependencies; reads the repo from disk only. See docs/SYSTEM_CHECKS.md.
  */
@@ -13,7 +13,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const argValue = (name) => {
+  const i = process.argv.indexOf(name);
+  return i > -1 ? process.argv[i + 1] : undefined;
+};
 const asJson = process.argv.includes('--json');
+const baselinePath = argValue('--baseline');
+const writeBaselinePath = argValue('--write-baseline');
 const findings = [];
 
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
@@ -252,10 +258,39 @@ const order = { ERROR: 0, WARN: 1, INFO: 2 };
 findings.sort((a, b) => order[a.level] - order[b.level] || a.id.localeCompare(b.id));
 const counts = findings.reduce((c, f) => ({ ...c, [f.level]: (c[f.level] || 0) + 1 }), {});
 
-if (asJson) {
-  console.log(JSON.stringify({ counts, findings }, null, 2));
-} else {
-  for (const f of findings) console.log(`${f.level.padEnd(5)} ${f.id.padEnd(22)} ${f.message}${f.where ? `  [${f.where}]` : ''}`);
-  console.log(`\n${counts.ERROR || 0} error(s), ${counts.WARN || 0} warning(s), ${counts.INFO || 0} info`);
+// Baseline: known ERRORs that are accepted until fixed. Keys ignore line numbers
+// so unrelated edits don't invalidate them.
+const keyOf = (f) => `${f.id}|${f.where.replace(/:\d+$/, '')}|${f.message}`;
+const errorKeys = [...new Set(findings.filter((f) => f.level === 'ERROR').map(keyOf))].sort();
+
+if (writeBaselinePath) {
+  fs.writeFileSync(path.resolve(writeBaselinePath), JSON.stringify(errorKeys, null, 2) + '\n');
+  console.log(`Wrote ${errorKeys.length} baseline entries to ${writeBaselinePath}`);
+  process.exit(0);
 }
-process.exit(counts.ERROR ? 1 : 0);
+
+let failing = findings.filter((f) => f.level === 'ERROR');
+let fixed = [];
+if (baselinePath) {
+  const baseline = new Set(JSON.parse(fs.readFileSync(path.resolve(baselinePath), 'utf8')));
+  failing = failing.filter((f) => !baseline.has(keyOf(f)));
+  fixed = [...baseline].filter((k) => !errorKeys.includes(k));
+}
+
+if (asJson) {
+  console.log(JSON.stringify({ counts, findings, newErrors: failing, fixedBaselineEntries: fixed }, null, 2));
+} else {
+  for (const f of findings) {
+    const known = baselinePath && f.level === 'ERROR' && !failing.includes(f) ? ' (baseline)' : '';
+    console.log(`${f.level.padEnd(5)} ${f.id.padEnd(22)} ${f.message}${f.where ? `  [${f.where}]` : ''}${known}`);
+  }
+  console.log(`\n${counts.ERROR || 0} error(s), ${counts.WARN || 0} warning(s), ${counts.INFO || 0} info`);
+  if (baselinePath) {
+    console.log(`${failing.length} new error(s) not in baseline ${baselinePath}`);
+    if (fixed.length) {
+      console.log(`${fixed.length} baseline entr${fixed.length === 1 ? 'y is' : 'ies are'} fixed; remove with --write-baseline ${baselinePath}:`);
+      for (const k of fixed) console.log(`  - ${k}`);
+    }
+  }
+}
+process.exit(failing.length ? 1 : 0);

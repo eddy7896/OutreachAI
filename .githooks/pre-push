@@ -1,0 +1,15 @@
+#!/bin/sh
+# Fast local checks before a push. CI runs the same checks plus lint and build.
+# Skip once with: SKIP_PREPUSH=1 git push
+[ "$SKIP_PREPUSH" = "1" ] && exit 0
+
+set -e
+echo "pre-push: validating branch name, types, tests and system checks..."
+node scripts/validate-branch.mjs
+npm run -s typecheck
+npm run -s test
+npm run -s check:system:ci > /dev/null || {
+  echo "pre-push: system checks found new errors. Run: npm run check:system:ci"
+  exit 1
+}
+echo "pre-push: OK"

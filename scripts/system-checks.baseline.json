@@ -1,0 +1,7 @@
+[
+  "BRANCH_LABEL|src/app/api/cron/sequences/route.ts|engine matches branchLabel \"false\" but SequenceBuilder only writes [Yes, No, Next Step]",
+  "FIRESTORE_UNDEFINED|src/app/api/cron/sequences/route.ts|updateDocument() writes currentSequenceNodeId: undefined; Firestore throws \"Unsupported field value: undefined\"",
+  "FIRESTORE_UNDEFINED|src/app/api/cron/sequences/route.ts|updateDocument() writes resendMessageId: undefined; Firestore throws \"Unsupported field value: undefined\"",
+  "PLACEHOLDER_SYNTAX|src/app/api/generate-template/route.ts|AI templates emit {{firstName}}, {{lastName}}, {{productName}} which resolvePlaceholders() does not resolve (it expects {{first_name}}, {{last_name}}, {{full_name}}, ...)",
+  "PRODUCT_KEY|src/app/api/cron/sequences/route.ts|campaign.targetProduct holds a product NAME (CampaignForm) but is compared to p.id"
+]

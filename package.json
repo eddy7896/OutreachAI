@@ -7,8 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "check:system": "node scripts/system-checks.mjs",
-    "eval": "node scripts/run-evals.mjs"
+    "check:system:ci": "node scripts/system-checks.mjs --baseline scripts/system-checks.baseline.json",
+    "lint:budget": "node scripts/lint-budget.mjs",
+    "validate": "node scripts/validate-branch.mjs && npm run -s typecheck && npm run -s test && npm run -s check:system:ci && npm run -s lint:budget",
+    "eval": "node scripts/run-evals.mjs",
+    "prepare": "node scripts/install-hooks.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -36,6 +43,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "4.1.11"
   }
 }

@@ -224,8 +224,10 @@ Add `vitest` and `"test": "vitest run"`. Cover `getNextValidSendTime`, `resolveP
 
 ## Phase 5: Code health and CI (ongoing)
 
-- GitHub Actions on every PR: `tsc`, `check:system`, `test`, `build`. `eval` on PRs labelled `ai-change`.
-- Clear the lint backlog, then add `lint` to CI.
+- ✅ **Done (2026-10-27):** CI on every push and PR (`.github/workflows/ci.yml`): branch and PR-title conventions, typecheck, vitest, `check:system:ci` and lint-budget ratchets, production build. Pre-push hook and `npm run validate`. Workflow in [BRANCHING.md](./BRANCHING.md).
+- Each Phase 0–4 PR removes its fixed entries from `scripts/system-checks.baseline.json` and lowers `scripts/lint-budget.json`.
+- Clear the lint backlog until the budget reaches 0, then switch CI from `lint:budget` to plain `lint`.
+- Optional: run `eval` on PRs labelled `ai-change` with repository secrets (only for same-repo branches, never forks).
 - Finish or remove the half-built notifications and `PendingActionsNotifier` (the "Needs review" badge from PR 4.2 can replace it).
 - Replace the root `SYSTEM_CONTEXT.md` and `MEMORY.md` with pointers to `docs/`. Move the `scratch/` and `test-*` scripts to `scripts/dev/`.
 

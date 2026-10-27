@@ -11,6 +11,7 @@ Start with **SYSTEM_CONTEXT** (what is true now), then **SYSTEM_ARCHITECTURE** (
 | [HALLUCINATION_CHECKS.md](./HALLUCINATION_CHECKS.md) | LLM fabrication and integrity risks, implemented checks, runtime guardrails, false claims in docs |
 | [SYSTEM_EVALS.md](./SYSTEM_EVALS.md) | Eval datasets, metrics, gates, how to run and extend |
 | [SYSTEM_CHECKS.md](./SYSTEM_CHECKS.md) | Static check inventory, baseline results, CI recipe, operational checklist |
+| [BRANCHING.md](./BRANCHING.md) | Branch naming, PR workflow, validation checks, CI, ratchets, GitHub settings to enable |
 | [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) | Phased, PR-sized fix plan with decisions, acceptance criteria and test plan |
 
 ## Tooling added
@@ -18,6 +19,8 @@ Start with **SYSTEM_CONTEXT** (what is true now), then **SYSTEM_ARCHITECTURE** (
 | Command | What it does |
 |---|---|
 | `npm run check:system` | `scripts/system-checks.mjs`: static drift and contract checks. No network. Exits 1 on errors |
+| `npm run validate` | Everything CI checks except the build: branch name, typecheck, tests, system-checks baseline, lint budget |
+| `npm test` | Vitest unit tests (`src/**/*.test.ts`, `scripts/**/*.test.mjs`) |
 | `npm run eval` | `scripts/run-evals.mjs`: live intent-classification and generation-grounding evals against `BASE_URL` |
 
 Datasets: `evals/intent-classification.jsonl` (26 labeled replies incl. prompt-injection cases), `evals/generation-fixtures.json` (3 lead/product fixtures).
