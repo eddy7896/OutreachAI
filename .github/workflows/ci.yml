@@ -3,8 +3,9 @@ name: CI
 on:
   push:
     branches: ['**']
+  # Title edits are handled by pr-title.yml, so they never cancel or skip the jobs below.
   pull_request:
-    types: [opened, synchronize, reopened, edited, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
@@ -28,11 +29,6 @@ jobs:
         env:
           BRANCH: ${{ github.head_ref || github.ref_name }}
         run: node scripts/validate-branch.mjs "$BRANCH"
-      - name: PR title (Conventional Commits)
-        if: github.event_name == 'pull_request'
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: node scripts/validate-pr-title.mjs
       - name: PR targets main
         if: github.event_name == 'pull_request'
         env:
@@ -47,8 +43,6 @@ jobs:
 
   quality:
     name: Typecheck, tests & checks
-    # Editing a PR title or description only needs the conventions job.
-    if: github.event.action != 'edited'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -69,7 +63,6 @@ jobs:
 
   build:
     name: Production build
-    if: github.event.action != 'edited'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

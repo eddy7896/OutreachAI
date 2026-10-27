@@ -68,7 +68,8 @@ Regex-based, not AST-based, so it can miss contracts expressed differently (e.g.
 
 | Job | Steps |
 |---|---|
-| Branch & PR conventions | branch name; PR title (Conventional Commits); PR targets `main` |
+| Branch & PR conventions | branch name; PR targets `main` |
+| PR title (`.github/workflows/pr-title.yml`) | Conventional Commits title; runs on its own so title edits don't cancel tests |
 | Typecheck, tests & checks | `npm ci` → `typecheck` → `test` → `check:system:ci` → `lint:budget` |
 | Production build | `npm ci` → `next build` (with a placeholder `RESEND_API_KEY` until PR 0.2) |
 
