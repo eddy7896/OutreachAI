@@ -67,8 +67,9 @@ These are string-keyed contracts the type system does not enforce. `scripts/syst
 4. Intent labels must equal the `Email['intent']` union. LLM output must be validated against it before it is stored or routed.
 5. Placeholders resolved server-side are `{{snake_case}}` (`utils/placeholders.ts`). Any generator must emit the same syntax.
 6. Vercel Cron calls routes with **GET**. Cron routes must export GET and check `CRON_SECRET`.
-7. Secrets live only in server env vars. Never read `settings.apiKeys` server-side or expose new keys through `NEXT_PUBLIC_*`.
-8. Do not instantiate SDK clients that throw on empty keys at module scope (this breaks `next build`).
+7. Render stored HTML only through `sanitizeHtml()` (`src/lib/sanitizeHtml.ts`); inbound email is attacker-controlled.
+8. Secrets live only in server env vars. Never read `settings.apiKeys` server-side or expose new keys through `NEXT_PUBLIC_*`.
+9. Do not instantiate SDK clients that throw on empty keys at module scope (this breaks `next build`).
 
 ## 6. Known-broken or unfinished areas (do not assume they work)
 

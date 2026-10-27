@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { fetchAll, createDocument, updateDocument } from '@/lib/firestore';
 import { Lead, Email } from '@/types';
 import { generateWithFallback } from '@/lib/ai';
+import { verifyWebhookSignature } from '@/lib/webhookSignature';
 import { getResend } from '@/lib/resend';
 
 export const maxDuration = 60; // Allow up to 60 seconds for the LLM to process the email intent
@@ -32,9 +33,22 @@ You must categorize the email into exactly ONE of the following intents:
 
 export async function POST(req: Request) {
   try {
+    // Only accept requests signed by Resend; anything else could forge replies and lead status.
+    const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error('RESEND_WEBHOOK_SECRET is not configured; rejecting inbound webhook');
+      return NextResponse.json({ error: 'Webhook verification is not configured' }, { status: 500 });
+    }
+    const rawBody = await req.text();
+    const verification = verifyWebhookSignature(rawBody, req.headers, webhookSecret);
+    if (!verification.ok) {
+      console.warn(`Rejected inbound webhook: ${verification.reason}`);
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
     // Resend Inbound Webhook Payload structure
     // See: https://resend.com/docs/knowledge-base/how-to-receive-inbound-emails
-    const payload = await req.json();
+    const payload = JSON.parse(rawBody);
 
     // Handle Resend Event Webhooks (e.g., email.opened, email.bounced, email.received)
     let emailData = payload;
@@ -84,7 +98,6 @@ export async function POST(req: Request) {
     }
     
     // Handle Resend Inbound Email Webhook (Raw parsed email)
-    // Basic verification (in production you would verify the Resend signature)
     if (!emailData || !emailData.from) {
       return NextResponse.json({ error: 'Invalid payload missing from address' }, { status: 400 });
     }

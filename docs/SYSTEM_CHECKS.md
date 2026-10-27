@@ -39,6 +39,7 @@ Static, dependency-free, and fast (<1 s). It reads the repo and reports `ERROR` 
 | `LLM_OUTPUT_UNVALIDATED` | WARN | LLM JSON returned/stored without enum validation |
 | `BUILD_ENV_REQUIRED` | WARN | Module-scope SDK construction that breaks `next build` without secrets |
 | `RESEND_OPTION_KEY` | ERROR | snake_case Resend options (`reply_to`, `scheduled_at`) that SDK v6 silently drops |
+| `UNSANITIZED_HTML` | ERROR | `dangerouslySetInnerHTML` whose value isn't wrapped in `sanitizeHtml()` |
 | `ROUTE_NO_AUTH` | WARN for send/cron/enrich/leads, INFO otherwise | Route handlers with no caller authentication |
 | `MODEL_PINNED` | INFO | Hard-coded model ids to re-verify periodically |
 

@@ -5,6 +5,7 @@ import { Box, Typography, Button, Grid, Card, CardContent, CardActions, Chip, Ci
 import { Add as AddIcon, Star as StarIcon, StarBorder as StarBorderIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useSignatures } from '@/hooks/useSignatures';
+import { sanitizeHtml } from '@/lib/sanitizeHtml';
 
 export default function SignaturesPage() {
   const router = useRouter();
@@ -84,7 +85,7 @@ export default function SignaturesPage() {
                         background: 'linear-gradient(transparent, #f9fafb)',
                       }
                     }}
-                    dangerouslySetInnerHTML={{ __html: sig.htmlContent }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(sig.htmlContent) }}
                   />
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'space-between', px: 2, pb: 2 }}>

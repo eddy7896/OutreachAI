@@ -31,7 +31,8 @@ flowchart LR
 ```
 
 **Trust boundaries (important):**
-- There is **no user authentication**. Every page and every API route except `/api/leads/import` (extension key) and `/api/cron/sequences` (optional `CRON_SECRET`) is publicly callable.
+- There is **no user authentication**. Every page and every API route except `/api/leads/import` (extension key), `/api/cron/sequences` (optional `CRON_SECRET`) and `/api/webhook/inbound` (Resend signature) is publicly callable.
+- Stored HTML (inbound email bodies, signatures) is rendered only through `sanitizeHtml()` (DOMPurify), enforced by the `UNSANITIZED_HTML` system check.
 - The browser holds the Firebase web config and talks to Firestore directly. The app only works if **Firestore security rules allow unauthenticated read/write**, so the database is effectively public. See [SYSTEM_ANALYSIS.md §4](./SYSTEM_ANALYSIS.md#4-security-posture).
 
 ---
@@ -131,7 +132,7 @@ Timestamps are mixed: `Timestamp.now()` (lib), `serverTimestamp()` (inbox, proce
 | `/api/generate-template` | POST | none | TemplateEditor ("AI generate"); Guides presets route to `/templates/new?preset=` | Writes a template using `{{firstName}}`-style placeholders |
 | `/api/send` | POST | none | Compose, Inbox reply, engines | Resend `emails.send`. `from` = `settings.profile.senderEmail` or a fallback. Reply-To = `settings.profile.replyToEmail` (as `replyTo`). The Resend client is created on first use (`src/lib/resend.ts`) |
 | `/api/track` | GET | none | 1×1 pixel in sent HTML | Sets `emails/{id}` `opened=true`, `status='opened'` (fire-and-forget) |
-| `/api/webhook/inbound` | POST | none (no signature check) | Resend webhooks | `email.opened` → mark opened. `email.received` → fetch body, match lead, classify, store inbound email, update `lead.status` and `hasUnread` |
+| `/api/webhook/inbound` | POST | Resend (Svix) signature, `RESEND_WEBHOOK_SECRET`; fails closed if unset | Resend webhooks | `email.opened` → mark opened. `email.received` → fetch body, match lead, classify, store inbound email, update `lead.status` and `hasUnread` |
 | `/api/enrich` | POST | none | LeadForm "auto-fill" | Local Firestore → Hunter email-verifier → Apollo people/match |
 | `/api/enrich/bulk` | POST | none | BulkCompanyDialog | Hunter domain-search (limit 10) → creates leads (`targetProduct: 'Default'`) |
 | `/api/leads/import` | POST | `Bearer EXTENSION_API_KEY` | Chrome extension | Finds the email via Hunter or Apollo if missing, otherwise a placeholder `unknown_<ts>@needs-enrichment.com`. Creates the lead |
@@ -242,7 +243,7 @@ flowchart LR
 | Cron | Only `/api/cron/sequences`, daily `0 10 * * *` (README says hourly) |
 | Firebase | Firestore only. `firebase.json` points at a non-existent `functions/` dir. No `firestore.rules` or `firestore.indexes.json` in the repo |
 | Required composite index | `emails(status ==, scheduledAt <=)` for send-scheduled. Inbox, outbox, and drafts sort in memory to avoid indexes |
-| Env vars (server) | `GEMINI_API_KEY`, `FALLBACK_API_URL`, `FALLBACK_API_KEY`, `FALLBACK_MODEL` (unused), `RESEND_API_KEY`, `HUNTER_API_KEY`, `APOLLO_API_KEY`, `EXTENSION_API_KEY`, `CRON_SECRET` |
+| Env vars (server) | `GEMINI_API_KEY`, `FALLBACK_API_URL`, `FALLBACK_API_KEY`, `FALLBACK_MODEL` (unused), `RESEND_API_KEY`, `RESEND_WEBHOOK_SECRET`, `HUNTER_API_KEY`, `APOLLO_API_KEY`, `EXTENSION_API_KEY`, `CRON_SECRET` |
 | Env vars (public) | `NEXT_PUBLIC_FIREBASE_*` (6) |
 | Tests / CI | None. `npm run lint` currently reports 123 problems (90 errors). `tsc --noEmit` passes |
 

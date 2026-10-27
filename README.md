@@ -49,6 +49,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID="..."
 
 # Email Provider
 RESEND_API_KEY="re_..."
+RESEND_WEBHOOK_SECRET="whsec_..." # Required: signing secret of the Resend webhook (Webhooks → your endpoint)
 
 # AI Providers
 GEMINI_API_KEY="AIza..."
@@ -91,7 +92,8 @@ To allow the AI to read and classify prospect replies, you must configure a webh
 1. Add a dedicated subdomain (e.g., `outreach.yourdomain.com`) to your Resend dashboard.
 2. Add the Resend Inbound MX record (`inbound.resend.com`) to your DNS provider for that subdomain.
 3. In Resend, create a new Webhook pointing to `https://your-production-url.com/api/webhook/inbound`.
-4. Select the `email.received` event.
+4. Select the `email.received` and `email.opened` events.
+5. Copy the webhook's **signing secret** (`whsec_...`) into `RESEND_WEBHOOK_SECRET`. The endpoint rejects unsigned requests (401) and refuses all requests (500) if the secret is not set.
 
 ### 3. Setting up the Sequence Cron Job
 The automated sequence engine relies on a cron job to check for delayed steps and send follow-ups.
