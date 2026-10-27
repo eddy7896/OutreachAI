@@ -11,6 +11,7 @@ Start with **SYSTEM_CONTEXT** (what is true now), then **SYSTEM_ARCHITECTURE** (
 | [HALLUCINATION_CHECKS.md](./HALLUCINATION_CHECKS.md) | LLM fabrication and integrity risks, implemented checks, runtime guardrails, false claims in docs |
 | [SYSTEM_EVALS.md](./SYSTEM_EVALS.md) | Eval datasets, metrics, gates, how to run and extend |
 | [SYSTEM_CHECKS.md](./SYSTEM_CHECKS.md) | Static check inventory, baseline results, CI recipe, operational checklist |
+| [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) | Phased, PR-sized fix plan with decisions, acceptance criteria and test plan |
 
 ## Tooling added
 
