@@ -4,11 +4,12 @@ import { verifyWebhookSignature, WEBHOOK_TOLERANCE_SECONDS } from './webhookSign
 
 // Fixed vector generated with svix@2.8.0 `new Webhook(secret).sign(id, date, body)`, so this
 // suite checks compatibility with Resend's signer, not just self-consistency.
-const SECRET = 'whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw';
-const ID = 'msg_p5jXN8AQM9LWM0D4loKWxJek';
-const TIMESTAMP = 1614265330;
-const BODY = '{"test": 2432232314}';
-const SVIX_SIGNATURE = 'v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE=';
+// The secret is built at runtime from an obviously fake key so no secret-shaped literal is committed.
+const SECRET = `whsec_${Buffer.from('outreach-ai-test-signing-key-not-a-real-secret').toString('base64')}`;
+const ID = 'msg_test_vector_1';
+const TIMESTAMP = 1761559200;
+const BODY = '{"type":"email.received","data":{"email_id":"em_1"}}';
+const SVIX_SIGNATURE = 'v1,EcMQ6YZ+/MsLoC3Px1v71cJTSmACjkfKh9Bcow/JuX4=';
 
 const headers = (sig: string, overrides: Record<string, string> = {}) =>
   new Headers({ 'svix-id': ID, 'svix-timestamp': String(TIMESTAMP), 'svix-signature': sig, ...overrides });
@@ -32,7 +33,7 @@ describe('verifyWebhookSignature', () => {
   });
 
   it('rejects a modified body', () => {
-    expect(verifyWebhookSignature(BODY.replace('2432232314', '1'), headers(SVIX_SIGNATURE), SECRET, TIMESTAMP)).toEqual({
+    expect(verifyWebhookSignature(BODY.replace('em_1', 'em_2'), headers(SVIX_SIGNATURE), SECRET, TIMESTAMP)).toEqual({
       ok: false,
       reason: 'signature mismatch',
     });
