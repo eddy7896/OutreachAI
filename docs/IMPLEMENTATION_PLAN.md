@@ -11,19 +11,16 @@
 
 | # | Decision | Outcome |
 |---|---|---|
-| D1 | **Access control** | **Google sign-in (Firebase Auth), limited to company accounts. Every record belongs to the signed-in user's account.** Users only see and act on their own leads, campaigns and emails |
+| D1 | **Access control** | **Google sign-in (Firebase Auth), limited to company accounts.** Each user's pipeline (leads, campaigns, emails) is private to their account. The team library is shared (Q2) |
 | D2 | **Scheduler** | **A free external scheduler calls one secured endpoint.** No Vercel cron dependency (see §1) |
 | D3 | **"Not Interested" replies** | **One-click confirmation.** The AI proposes, the user confirms. Only `BOUNCE` and `OUT_OF_OFFICE` are applied automatically |
 | D4 | **Sequence engines** | One engine in `src/lib/sequenceEngine.ts`. Both existing URLs become thin wrappers, then are retired |
+| Q1 | **Allowed sign-in domain** | `easyio.tech` only (`ALLOWED_EMAIL_DOMAINS=easyio.tech`) |
+| Q2 | **What is shared** | **Shared team library:** products, templates, signatures, sequences. Any `@easyio.tech` user can read, create and edit them; each doc records `createdBy` and `updatedBy`. **Private per user:** leads, campaigns, emails, notifications, settings (which include each user's chosen default signature) |
+| Q3 | **Owner of existing data** | `faheem@easyio.tech`. The backfill assigns all existing private records to this account, and marks it as the admin in `ADMIN_EMAILS` |
+| Q4 | **Repo visibility** | **Public.** GitHub Actions minutes are free and unlimited, so the scheduler can run every 15 minutes. Secrets must only ever live in GitHub/Vercel secret settings (history scan on 2026-10-27: no keys found) |
 
-### Still open (needed by Phase 1)
-
-| # | Question | Default if not answered |
-|---|---|---|
-| Q1 | Which email domain(s) may sign in? | One domain, set in `ALLOWED_EMAIL_DOMAINS` (e.g. `easyio.tech`) |
-| Q2 | Are **products, templates and signatures** private per user, or shared company-wide? | Products and templates **shared** (read by all, edited by creator). Signatures, leads, campaigns, sequences, emails and settings **private** |
-| Q3 | Which account should own the data that already exists? | Everything is assigned to one account by the backfill script (PR 1.4) |
-| Q4 | Is the GitHub repo private? | Assume private (affects the free GitHub Actions minutes, see §1) |
+> "Sequences" were not named explicitly; they are treated as shared because they reference shared templates and work like templates. Each campaign still chooses which sequence to use. Switch them to private if that's wrong.
 
 ---
 
@@ -33,27 +30,33 @@ The engine becomes one endpoint, `GET /api/cron/run`, protected by `Authorizatio
 
 | Option | Cost | Frequency | Pros | Cons |
 |---|---|---|---|---|
-| **GitHub Actions `schedule`** *(recommended)* | Free. Private repos get 2,000 Actions minutes/month, and each run bills as at least 1 minute | Hourly ≈ 720 min/month ✅. Every 30 min ≈ 1,440 ✅. Every 15 min ≈ 2,880 ❌ over the free limit on a private repo | Lives in the repo, secret stored in GitHub Secrets, run history visible, no new account | Start times are best-effort (can be delayed several minutes under load). Scheduled workflows stop after 60 days without repo activity on public repos |
+| **GitHub Actions `schedule`** *(chosen)* | Free and unlimited for **public** repos (this one). A private repo would get 2,000 min/month, with each run billed as at least 1 minute | Every 15 min is fine on a public repo | Lives in the repo, secret stored in GitHub Secrets, run history visible, no new account | Start times are best-effort (can be delayed several minutes under load). **On public repos, scheduled workflows are auto-disabled after 60 days without repo activity**, so the workflow re-enables itself (see below) and `cronRuns` staleness is shown on the dashboard |
 | **cron-job.org** | Free | Down to every minute | Precise timing, failure email alerts, simple UI | Third-party account holds the cron secret |
 | **Firebase scheduled Cloud Functions** | Needs the **Blaze** (pay-as-you-go) plan with a card. At this volume, usage normally stays inside the free quota (Cloud Scheduler includes 3 free jobs per billing account) | Any | Same platform as the database. Could later run the engine itself | Requires a billing account, plus a separate `functions/` deploy pipeline |
 | Vercel Cron (current) | Free on Hobby | Daily only on Hobby | Already configured | Too infrequent for follow-ups and send windows |
 
-**Recommendation:** GitHub Actions, **hourly**, in `.github/workflows/cron.yml`. If you later need 15-minute precision, point cron-job.org at the same endpoint. Remove the Vercel cron entry once the workflow is live.
+**Decision:** GitHub Actions, **every 15 minutes**, in `.github/workflows/cron.yml`. cron-job.org stays as a backup that can call the same endpoint. Remove the Vercel cron entry once the workflow is live.
+
+Public-repo safety: the workflow only reads `secrets.*`, which GitHub never exposes to pull requests from forks. Workflow logs are public, so the curl call must never echo the secret or the response body.
 
 ```yaml
 # .github/workflows/cron.yml (PR 2.3)
 on:
-  schedule: [{ cron: '7 * * * *' }]   # hourly, off the :00 rush
+  schedule: [{ cron: '4,19,34,49 * * * *' }]   # every 15 min, off the :00 rush
   workflow_dispatch: {}
+permissions: {}
 jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - run: |
-          curl -fsS --max-time 280 -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+          curl -fsS -o /dev/null -w "%{http_code}\n" --max-time 280 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             "${{ secrets.APP_URL }}/api/cron/run"
 ```
+
+To avoid the 60-day auto-disable, a small monthly job (`keepalive.yml`) re-enables both scheduled workflows, itself included, through the GitHub API (`gh workflow enable`) with `permissions: actions: write`. It runs well inside the 60-day window, so it is never disabled first. Confirm the reset behavior after the first month; if it doesn't hold, switch the trigger to cron-job.org. The dashboard also warns when the last `cronRuns` document is older than 1 hour.
 
 Because the engine both creates and sends due emails in the same call (PR 2.2), one scheduled job covers everything.
 
@@ -72,7 +75,7 @@ File: `src/app/api/cron/sequences/route.ts`
 ### PR 0.2: Send and build fixes (C8, build, S7)
 - `/api/send`: `reply_to` → `replyTo`.
 - Create the Resend client lazily (`src/lib/resend.ts` → `getResend()`) so `next build` works without secrets.
-- `git rm -r --cached .firebase/logs`, then add `.firebase/` to `.gitignore`.
+- `git rm -r --cached .firebase/logs`, then add `.firebase/` to `.gitignore`. The log contains `faheem@easyio.tech` and no keys (scanned 2026-10-27). Since the repo is public, the address stays in history unless that history is rewritten; that's optional and not planned.
 
 ### PR 0.3: Inbox XSS and webhook signature (S3, S4)
 - Sanitize inbound email HTML and signatures with `isomorphic-dompurify` before `dangerouslySetInnerHTML` (`inbox/page.tsx:332`, `signatures/*`).
@@ -101,7 +104,8 @@ flowchart LR
   APP -->|Admin SDK, server only| FS
 ```
 
-- **Ownership field:** every private document gets `ownerId` (Firebase uid) and `ownerEmail`. Settings move from `settings/global` to `settings/{uid}`.
+- **Private collections** (`leads`, `campaigns`, `emails`, `notifications`) get `ownerId` (Firebase uid) and `ownerEmail`. Settings move from `settings/global` to `settings/{uid}`, which also holds that user's `defaultSignatureId`.
+- **Shared collections** (`products`, `templates`, `signatures`, `sequences`) are a team library: no owner filter, and `createdBy` / `updatedBy` record who changed what. Signatures lose the global `isDefault` flag, because each user picks their own default in Settings.
 - **Two layers of enforcement:** Firestore rules protect direct browser access, and API routes check the session and filter by `ownerId` with the Admin SDK.
 - **Sender identity per user:** `from = "<Name> <user email>"` (works because the company domain is verified in Resend). Reply-To = `reply+<uid>@<inbound subdomain>`, so the webhook knows which user an inbound reply belongs to without guessing.
 
@@ -118,26 +122,44 @@ New: `src/lib/firebaseAdmin.ts` (service account from `FIREBASE_SERVICE_ACCOUNT`
 - Extension import: per-user extension keys (`extensionKeys/{hash} → uid`), generated in Settings, instead of one shared `EXTENSION_API_KEY`.
 
 ### PR 1.3: Scoped queries, rules and indexes
-- Every hook adds `where('ownerId','==',uid)` and waits for `uid` before subscribing. Pages that call Firestore directly (inbox, outbox, drafts, BulkCampaignDialog) move behind hooks.
-- `createDocument` stamps `ownerId` and `ownerEmail` from the current user.
-- New `firestore.rules`:
+- Hooks for private collections (`useLeads`, `useCampaigns`, `useEmails`, `useNotifications`, `useSettings`) add `where('ownerId','==',uid)` and wait for `uid` before subscribing. Hooks for shared collections stay unfiltered. Pages that call Firestore directly (inbox, outbox, drafts, BulkCampaignDialog) move behind hooks.
+- `createDocument` stamps `ownerId`/`ownerEmail` on private collections and `createdBy`/`updatedBy` on shared ones. `updateDocument` stamps `updatedBy`.
+- New `firestore.rules` (deny by default; anything not listed is unreachable from the browser):
   ```
-  function signedIn() { return request.auth != null && request.auth.token.email_verified
-                        && request.auth.token.email.matches('.*@easyio[.]tech$'); }
-  function owns(d)    { return d.ownerId == request.auth.uid; }
-  match /{col}/{id} {
-    allow read, update, delete: if signedIn() && owns(resource.data);
-    allow create:               if signedIn() && owns(request.resource.data);
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{db}/documents {
+      function signedIn() { return request.auth != null && request.auth.token.email_verified == true
+                            && request.auth.token.email.matches('.*@easyio[.]tech$'); }
+      function owns(d)    { return d.ownerId == request.auth.uid; }
+
+      // Private, per user
+      match /{col}/{id} {
+        allow read, update, delete: if col in ['leads','campaigns','emails','notifications']
+                                    && signedIn() && owns(resource.data);
+        allow create:               if col in ['leads','campaigns','emails','notifications']
+                                    && signedIn() && owns(request.resource.data);
+      }
+      match /settings/{uid} { allow read, write: if signedIn() && uid == request.auth.uid; }
+
+      // Shared team library
+      match /{col}/{id} {
+        allow read, write: if col in ['products','templates','signatures','sequences'] && signedIn();
+      }
+      // locks, cronRuns, extensionKeys: server only (Admin SDK bypasses rules)
+    }
   }
-  match /settings/{uid} { allow read, write: if signedIn() && uid == request.auth.uid; }
-  // shared products/templates per Q2: read for any signedIn(), write for owner
   ```
-- New `firestore.indexes.json`: `ownerId + createdAt desc` for each collection, `emails(ownerId, campaignId, createdAt)`, `emails(ownerId, leadId)`, `emails(status, scheduledAt)`. Add Firebase config for rules and indexes; remove the dead `functions` entry from `firebase.json`.
+- New `firestore.indexes.json`: `(ownerId, createdAt desc)` on each private collection, `emails(ownerId, campaignId, createdAt)`, `emails(ownerId, leadId)`, `emails(status, scheduledAt)`, `leads(ownerId, email)`. Add the rules and index files to `firebase.json` and remove its dead `functions` entry.
 - **Done when:** user A can't see user B's leads, in the UI or through a direct Firestore query from the console.
 
 ### PR 1.4: Backfill existing data
-- `scripts/backfill-owner.mjs --email <owner> [--dry-run]` uses the Admin SDK to set `ownerId` and `ownerEmail` on every document that has none, and copies `settings/global` → `settings/{uid}`.
-- Run it with `--dry-run` first, then for real **before** deploying the new rules (otherwise existing data becomes invisible).
+- `scripts/backfill-owner.mjs --email faheem@easyio.tech [--dry-run]` uses the Admin SDK:
+  - Looks up the uid with `auth.getUserByEmail()`. **faheem@easyio.tech must sign in once (PR 1.1 deployed) before this runs.**
+  - Sets `ownerId`/`ownerEmail` on every private document that has none, and `createdBy` on shared documents.
+  - Copies `settings/global` → `settings/{uid}`, and turns the current `isDefault` signature into that user's `defaultSignatureId`.
+- Rollout order: deploy PR 1.1 → Faheem signs in → run the backfill with `--dry-run` and check the counts → run it for real → deploy the new rules and PR 1.3. (If the rules go first, existing data becomes invisible.)
+- `ADMIN_EMAILS=faheem@easyio.tech`. Admins can read the cron run log and the team-wide analytics view; they still can't edit other users' leads.
 
 ### PR 1.5: Per-user sending and reply routing
 - `/api/send` gets the sender name and email from `requireUser` and `settings/{uid}`, and sets Reply-To to `reply+<uid>@…`.
@@ -219,8 +241,8 @@ Phase 5 runs alongside everything.
 | Phase | PRs | Rough effort | Outcome |
 |---|---|---|---|
 | 0 Hotfixes | 3 | 1–2 days | Cron no longer broken, Inbox XSS closed, webhook signed |
-| 1 Google sign-in + per-user data | 5 | 1–1.5 weeks | Only company accounts get in, and each user sees only their own data |
-| 2 Engine + free scheduler | 4 | ~1 week | Follow-ups run hourly from GitHub Actions, no double sends |
+| 1 Google sign-in + per-user data | 5 | 1–1.5 weeks | Only `@easyio.tech` accounts get in; private pipeline per user, shared team library |
+| 2 Engine + free scheduler | 4 | ~1 week | Follow-ups run every 15 min from GitHub Actions, no double sends |
 | 3 Data accuracy | 3 | 3–4 days | Send status, opens and campaign stats are correct |
 | 4 AI + confirmation | 3 | ~1 week | "Not Interested" needs a click; AI output validated and grounded |
 | 5 Code health and CI | ongoing | — | Regressions and doc drift caught automatically |
@@ -232,7 +254,7 @@ Phase 1 comes before the engine rewrite because the engine has to be owner-aware
 | Phase | Verification |
 |---|---|
 | 0 | `check:system` errors for C1–C3 gone; `npm run build` with no env; XSS payload inert; unsigned webhook → 401 |
-| 1 | Sign in with a company account works, and a personal Gmail is rejected. Two test users can't see each other's data in the UI or through direct Firestore reads. API routes return 401 without a session. The backfill dry-run lists the expected counts |
+| 1 | An `@easyio.tech` account can sign in and a personal Gmail is rejected. Two test users can't see each other's leads, campaigns or emails, in the UI or through direct Firestore reads, but both see the same products, templates, signatures and sequences. API routes return 401 without a session. After the backfill, faheem@easyio.tech sees all the existing data |
 | 2 | `npm test`; a manual run of the `workflow_dispatch` workflow; two overlapping calls produce one send; the `cronRuns` document records counts |
 | 3 | Send, open and reply to a test email: one sent count, `opened:true` with the status unchanged, campaign `replied` incremented |
 | 4 | A "Not Interested" reply creates a pending review and pauses the sequence; Confirm marks the lead lost; Dismiss keeps it. `npm run eval` meets the gates |
