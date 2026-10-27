@@ -74,7 +74,7 @@ These are string-keyed contracts the type system does not enforce. `scripts/syst
 
 | Area | State |
 |---|---|
-| Daily cron (Engine B) | Never sends (product key mismatch). Aborts on `end` nodes (undefined write). Condition branch label mismatch |
+| Daily cron (Engine B) | Fixed in `fix/cron-engine-hotfixes`: finds products by name, follows `Yes`/`No`, marks leads complete (`sequenceCompletedAt`) at the end, isolates per-lead failures, advances only after a successful send. Still runs only daily and ignores the campaign send window (until Phase 2) |
 | Scheduled sending | `status:'scheduled'` emails are only sent if someone POSTs `/api/cron/send-scheduled` |
 | Reply-To | `settings.profile.replyToEmail` is passed as `reply_to`, which Resend SDK v6 ignores (it expects `replyTo`) |
 | Campaign stats | Only `sent` is ever incremented, and only by send-scheduled |

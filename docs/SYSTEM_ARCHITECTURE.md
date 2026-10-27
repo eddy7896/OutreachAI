@@ -197,17 +197,17 @@ Routing table: `POSITIVE_INTEREST`/`MORE_INFO_REQUESTED`/`UNKNOWN`/any other lab
 | Aspect | **Engine A** `/api/cron/process-sequences` (manual button) | **Engine B** `/api/cron/sequences` (Vercel Cron, daily) |
 |---|---|---|
 | Trigger | POST from campaign page, optional `?campaignId` | GET daily 10:00 UTC |
-| Product lookup | `p.name === campaign.targetProduct` ✅ | `p.id === campaign.targetProduct` ❌ never matches |
+| Product lookup | `p.name === campaign.targetProduct` ✅ | `p.name === campaign.targetProduct` ✅ (fixed) |
 | Email node | Generates → creates `status:'scheduled'` at `getNextValidSendTime()` | Generates → creates `status:'sent'` → sends immediately (ignores schedule window/timezone) |
 | Who sends scheduled mail | `/api/cron/send-scheduled`, which **nothing calls** | itself |
 | A/B variant | ignored (always `templateId`) | 50/50 `Math.random()`, records `variant` |
 | Signature + pixel | not added | added |
-| Condition node | Looks for inbound email since last action → `Yes`/`No` branch | Assumes "no reply" → looks for branch `'false'`, which the builder never writes |
-| Terminal-lead filter | `contactStatus` Meeting Booked/Not Interested, `status==='lost'` | `status` in replied/qualified/lost/converted |
-| End / invalid node | no-op | writes `currentSequenceNodeId: undefined` → **Firestore throws** → whole run aborts (500) |
+| Condition node | Looks for inbound email since last action → `Yes`/`No` branch | Assumes "no reply" (replied leads are filtered out) → follows the `No` branch (fixed) |
+| Terminal-lead filter | `contactStatus` Meeting Booked/Not Interested, `status==='lost'` | `status` in replied/qualified/lost/converted, `contactStatus` Meeting Booked/Not Interested, or `sequenceCompletedAt` set (fixed) |
+| End / invalid node | no-op | clears the node with `deleteField()` and sets `sequenceCompletedAt`; a failing lead no longer aborts the run (fixed) |
 | Lead status update | `status:'contacted'`, `contactStatus` → "First Contact"/"Follow Up N" | `status:'contacted'` only on first touch |
 
-**Net effect today:** Engine B never sends (product lookup fails, so every email node logs `Missing template or product` and the lead stays put). It also crashes on the first lead at an `end` node. Engine A queues emails that stay `scheduled` forever unless someone POSTs `/api/cron/send-scheduled` by hand. Details and fixes are in [SYSTEM_ANALYSIS.md §3](./SYSTEM_ANALYSIS.md#3-correctness-defects-verified).
+**Net effect today:** after `fix/cron-engine-hotfixes`, Engine B sends and walks sequences correctly, but only once a day and ignoring send windows; a failed send marks the email `failed` and retries on the next run. Engine A queues emails that stay `scheduled` forever unless someone POSTs `/api/cron/send-scheduled` by hand. Details and fixes are in [SYSTEM_ANALYSIS.md §3](./SYSTEM_ANALYSIS.md#3-correctness-defects-verified).
 
 ### 6.4 LinkedIn extension import
 
