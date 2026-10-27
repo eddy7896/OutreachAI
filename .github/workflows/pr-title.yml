@@ -1,0 +1,30 @@
+name: PR title
+
+# Separate from ci.yml so editing a title re-checks only the title and never
+# cancels or skips the test and build jobs.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  title:
+    name: PR title
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The title is untrusted input: pass it through env, never inline in the script.
+      - name: Conventional Commits title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: node scripts/validate-pr-title.mjs

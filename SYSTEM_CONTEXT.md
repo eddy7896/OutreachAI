@@ -1,5 +1,7 @@
 # 📧 Email Outreach & Intent Classification Platform — System Context
 
+> ⚠️ **Superseded (2026-10-26).** This is the original *pre-development plan* and no longer matches the code (e.g. Cloud Functions, `/api/send-bulk`, `/api/pending-actions` were never built). The accurate, as-built context is **[docs/SYSTEM_CONTEXT.md](docs/SYSTEM_CONTEXT.md)**. Discrepancies are listed in [docs/DRIFT_REPORT.md](docs/DRIFT_REPORT.md).
+
 > **Last Updated**: 2026-06-19
 > **Project Type**: Internal B2B Sales Outreach Tool
 > **Owner**: Internal SDR team

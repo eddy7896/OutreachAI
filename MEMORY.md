@@ -1,5 +1,7 @@
 # 🧠 Project Memory — Email Outreach Platform
 
+> ⚠️ **Partly superseded (2026-10-26).** Several decisions and conventions below were not implemented as written (Cloud Functions, notification fallback, "no `any`", "components never call Firestore directly"). For current state see **[docs/SYSTEM_CONTEXT.md](docs/SYSTEM_CONTEXT.md)** and [docs/DRIFT_REPORT.md](docs/DRIFT_REPORT.md).
+
 > This file tracks all decisions, conventions, patterns, known issues, and important notes accumulated during development. It serves as persistent memory across sessions.
 >
 > **Convention**: Append new entries at the TOP of each section (newest first). Never delete entries — mark obsolete ones with ~~strikethrough~~.

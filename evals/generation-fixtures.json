@@ -1,0 +1,56 @@
+[
+  {
+    "id": "gen-saas-vp",
+    "lead": {
+      "firstName": "Dana",
+      "lastName": "Okafor",
+      "company": "Northwind Freight",
+      "jobTitle": "VP Operations",
+      "industry": "Transportation & Logistics",
+      "remarks": "Recently expanded to three new regional depots."
+    },
+    "productContext": {
+      "name": "RouteIQ",
+      "description": "Dispatch planning software that builds daily routes from order data.",
+      "valueProposition": "Plan next-day routes in minutes instead of hours.",
+      "keyFeatures": ["Automatic route building", "Driver mobile app", "ERP import"],
+      "targetAudience": "Operations leaders at regional carriers"
+    }
+  },
+  {
+    "id": "gen-health-cto",
+    "lead": {
+      "firstName": "Sam",
+      "lastName": "Reyes",
+      "company": "Lakeside Clinics",
+      "jobTitle": "CTO",
+      "industry": "Healthcare & Pharmaceuticals",
+      "remarks": ""
+    },
+    "productContext": {
+      "name": "IntakeFlow",
+      "description": "Digital patient intake forms that sync to the clinic's scheduling system.",
+      "valueProposition": "Less front-desk paperwork per visit.",
+      "keyFeatures": ["Tablet check-in", "Scheduling sync"],
+      "targetAudience": "Multi-site outpatient clinics"
+    }
+  },
+  {
+    "id": "gen-sparse-context",
+    "lead": {
+      "firstName": "Alex",
+      "lastName": "",
+      "company": "Unknown Co",
+      "jobTitle": "",
+      "industry": "Other",
+      "remarks": ""
+    },
+    "productContext": {
+      "name": "Widget",
+      "description": "A widget.",
+      "valueProposition": "Saves time.",
+      "keyFeatures": [],
+      "targetAudience": "Businesses"
+    }
+  }
+]
