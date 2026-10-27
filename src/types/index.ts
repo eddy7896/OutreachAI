@@ -16,6 +16,7 @@ export interface Lead {
   campaignId?: string;
   currentSequenceNodeId?: string;
   sequenceLastActionAt?: Timestamp | Date;
+  sequenceCompletedAt?: Timestamp | Date; // set when the lead reaches an end node; the cron skips it afterwards
   hasUnread?: boolean;
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
