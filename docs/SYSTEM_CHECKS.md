@@ -38,6 +38,7 @@ Static, dependency-free, and fast (<1 s). It reads the repo and reports `ERROR` 
 | `PROMPT_DUPLICATED` | WARN | Same prompt constant defined in several files |
 | `LLM_OUTPUT_UNVALIDATED` | WARN | LLM JSON returned/stored without enum validation |
 | `BUILD_ENV_REQUIRED` | WARN | Module-scope SDK construction that breaks `next build` without secrets |
+| `UNSANITIZED_HTML` | ERROR | `dangerouslySetInnerHTML` whose value isn't wrapped in `sanitizeHtml()` |
 | `ROUTE_NO_AUTH` | WARN for send/cron/enrich/leads, INFO otherwise | Route handlers with no caller authentication |
 | `MODEL_PINNED` | INFO | Hard-coded model ids to re-verify periodically |
 

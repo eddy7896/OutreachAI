@@ -30,6 +30,7 @@ import { collection, query, where, onSnapshot, addDoc, serverTimestamp, updateDo
 import { db } from '@/lib/firebase';
 import { Lead, Email } from '@/types';
 import { RichTextToolbar } from '@/components/ui/RichTextToolbar';
+import { sanitizeHtml } from '@/lib/sanitizeHtml';
 
 export default function InboxPage() {
   const [repliedLeads, setRepliedLeads] = useState<Lead[]>([]);
@@ -329,7 +330,7 @@ export default function InboxPage() {
                           '& div[dir="ltr"] > div.gmail_quote': { display: 'none' },
                         }}>
                           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>{msg.subject}</Typography>
-                          <div dangerouslySetInnerHTML={{ __html: msg.body }} />
+                          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(msg.body) }} />
                         </Box>
                       </Box>
                     </React.Fragment>

@@ -225,6 +225,16 @@ for (const [route, r] of Object.entries(routes)) {
   }
 }
 
+// Stored HTML (inbound email, signatures) is attacker-controlled: it must pass through sanitizeHtml().
+for (const file of srcFiles) {
+  const text = read(file);
+  for (const m of text.matchAll(/dangerouslySetInnerHTML=\{\{\s*__html:\s*([^}]+?)\s*\}\}/g)) {
+    if (!/^sanitizeHtml\(/.test(m[1])) {
+      add('ERROR', 'UNSANITIZED_HTML', `dangerouslySetInnerHTML renders ${m[1]} without sanitizeHtml()`, `${file}:${lineOf(text, m.index)}`);
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // 12. Hard-coded model identifiers (review for deprecation / availability)
 // ---------------------------------------------------------------------------

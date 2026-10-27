@@ -7,6 +7,7 @@ import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from '@mui/icons-materia
 import { useRouter, useParams } from 'next/navigation';
 import { fetchOne, createDocument, updateDocument } from '@/lib/firestore';
 import { Signature } from '@/types';
+import { sanitizeHtml } from '@/lib/sanitizeHtml';
 
 export default function SignatureEditorPage() {
   const router = useRouter();
@@ -134,7 +135,7 @@ export default function SignatureEditorPage() {
                 bgcolor: 'background.default',
                 minHeight: 100
               }}
-              dangerouslySetInnerHTML={{ __html: htmlContent }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(htmlContent) }}
             />
           </Box>
 
