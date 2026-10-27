@@ -58,7 +58,7 @@ Examples: `feat(auth): add Google sign-in`, `fix(cron): stop writing undefined t
 | Check | Command | Local pre-push | CI on push | CI on PR | Blocks merge |
 |---|---|---|---|---|---|
 | Branch name | `node scripts/validate-branch.mjs` | ✅ | ✅ | ✅ | ✅ |
-| PR title | `node scripts/validate-pr-title.mjs` | — | — | ✅ | ✅ |
+| PR title (`pr-title.yml`, re-runs on title edits) | `node scripts/validate-pr-title.mjs` | — | — | ✅ | ✅ |
 | PR targets `main` | (workflow step) | — | — | ✅ | ✅ |
 | Typecheck | `npm run typecheck` | ✅ | ✅ | ✅ | ✅ |
 | Unit tests (vitest) | `npm test` | ✅ | ✅ | ✅ | ✅ |
@@ -84,7 +84,7 @@ These need a repo admin and can't be set from code:
 
 1. **Rules → Rulesets → New branch ruleset** targeting `main`:
    - Require a pull request before merging. 1 approval once there's a second contributor; 0 while working solo.
-   - Require status checks to pass: `Branch & PR conventions`, `Typecheck, tests & checks`, `Production build`. Also require branches to be up to date before merging.
+   - Require status checks to pass: `Branch & PR conventions`, `PR title`, `Typecheck, tests & checks`, `Production build`. Also require branches to be up to date before merging.
    - Block force pushes and deletions.
    - Require linear history.
 2. **General → Pull Requests:** allow **squash merging** only; default commit message "Pull request title"; enable "Automatically delete head branches".
