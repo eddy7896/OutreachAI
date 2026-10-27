@@ -11,7 +11,7 @@
 | Branch / PR conventions | `node scripts/validate-branch.mjs`, `scripts/validate-pr-title.mjs` | no | ✅ (see [BRANCHING.md](./BRANCHING.md)) |
 | Lint | `npm run lint` (`eslint`) | no | ❌ 90 errors / 33 warnings (backlog) |
 | Lint budget | `npm run lint:budget` | no | ✅ at budget (90 / 33); fails on any increase |
-| Build | `npm run build` | no | ❌ without `RESEND_API_KEY`. ✅ with any non-empty value |
+| Build | `npm run build` | no | ✅ with no env vars set |
 | **Drift & invariants** | `npm run check:system` | no | ❌ 6 errors / 20 warnings / 14 info (full report) |
 | Drift & invariants vs baseline | `npm run check:system:ci` | no | ✅ 0 new errors; fails on anything not in `scripts/system-checks.baseline.json` |
 | AI evals | `npm run eval` | **yes** (AI providers) | not yet baselined (needs keys) |
@@ -38,6 +38,7 @@ Static, dependency-free, and fast (<1 s). It reads the repo and reports `ERROR` 
 | `PROMPT_DUPLICATED` | WARN | Same prompt constant defined in several files |
 | `LLM_OUTPUT_UNVALIDATED` | WARN | LLM JSON returned/stored without enum validation |
 | `BUILD_ENV_REQUIRED` | WARN | Module-scope SDK construction that breaks `next build` without secrets |
+| `RESEND_OPTION_KEY` | ERROR | snake_case Resend options (`reply_to`, `scheduled_at`) that SDK v6 silently drops |
 | `UNSANITIZED_HTML` | ERROR | `dangerouslySetInnerHTML` whose value isn't wrapped in `sanitizeHtml()` |
 | `ROUTE_NO_AUTH` | WARN for send/cron/enrich/leads, INFO otherwise | Route handlers with no caller authentication |
 | `MODEL_PINNED` | INFO | Hard-coded model ids to re-verify periodically |

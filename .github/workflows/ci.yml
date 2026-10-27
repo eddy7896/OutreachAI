@@ -72,9 +72,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Deliberately no secrets: the build must succeed without any API keys.
       - name: next build
         run: npm run build
         env:
-          # Placeholder until PR 0.2 makes the Resend client lazy; no real key is used at build time.
-          RESEND_API_KEY: re_ci_placeholder
           NEXT_TELEMETRY_DISABLED: '1'
