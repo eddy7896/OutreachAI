@@ -215,8 +215,12 @@ for (const file of promptDefs) {
 // ---------------------------------------------------------------------------
 for (const file of srcFiles) {
   const text = read(file);
-  const m = /^const \w+ = new Resend\(process\.env\.RESEND_API_KEY \|\| ''\)/m.exec(text);
-  if (m) add('WARN', 'BUILD_ENV_REQUIRED', 'Resend client constructed at module scope; `next build` fails when RESEND_API_KEY is unset', `${file}:${lineOf(text, m.index)}`);
+  const m = /^(?:export )?const \w+ = new Resend\(/m.exec(text);
+  if (m) add('WARN', 'BUILD_ENV_REQUIRED', 'Resend client constructed at module scope; `next build` fails when RESEND_API_KEY is unset (use getResend())', `${file}:${lineOf(text, m.index)}`);
+  // Resend SDK v6 reads camelCase options; snake_case keys are silently dropped.
+  for (const s of text.matchAll(/\b(reply_to|scheduled_at)\s*:/g)) {
+    add('ERROR', 'RESEND_OPTION_KEY', `${s[1]} is ignored by the Resend SDK (use ${s[1] === 'reply_to' ? 'replyTo' : 'scheduledAt'})`, `${file}:${lineOf(text, s.index)}`);
+  }
 }
 for (const [route, r] of Object.entries(routes)) {
   if (!/authorization/i.test(r.text)) {
