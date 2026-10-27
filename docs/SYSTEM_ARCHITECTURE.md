@@ -129,7 +129,7 @@ Timestamps are mixed: `Timestamp.now()` (lib), `serverTimestamp()` (inbox, proce
 | `/api/generate` | POST | none | Compose, Campaign "Run", both engines (server→self HTTP) | Resolves `{{snake_case}}` placeholders. If product context exists, asks the LLM to polish into `{subject, body}` |
 | `/api/auto-format` | POST | none | Compose and Campaign "Run" when no template | Writes a fresh email from lead and product context (<150 words) |
 | `/api/generate-template` | POST | none | TemplateEditor ("AI generate"); Guides presets route to `/templates/new?preset=` | Writes a template using `{{firstName}}`-style placeholders |
-| `/api/send` | POST | none | Compose, Inbox reply, engines | Resend `emails.send`. `from` = `settings.profile.senderEmail` or a fallback. `reply_to` is passed under a key the SDK ignores |
+| `/api/send` | POST | none | Compose, Inbox reply, engines | Resend `emails.send`. `from` = `settings.profile.senderEmail` or a fallback. Reply-To = `settings.profile.replyToEmail` (as `replyTo`). The Resend client is created on first use (`src/lib/resend.ts`) |
 | `/api/track` | GET | none | 1×1 pixel in sent HTML | Sets `emails/{id}` `opened=true`, `status='opened'` (fire-and-forget) |
 | `/api/webhook/inbound` | POST | none (no signature check) | Resend webhooks | `email.opened` → mark opened. `email.received` → fetch body, match lead, classify, store inbound email, update `lead.status` and `hasUnread` |
 | `/api/enrich` | POST | none | LeadForm "auto-fill" | Local Firestore → Hunter email-verifier → Apollo people/match |
@@ -238,7 +238,7 @@ flowchart LR
 | Concern | Reality |
 |---|---|
 | Hosting | Vercel (implied by `vercel.json`, extension `*.vercel.app`) |
-| Build | `next build` (Turbopack). **Fails when `RESEND_API_KEY` is unset** because `new Resend('')` throws at module load in `/api/send` and `/api/webhook/inbound` |
+| Build | `next build` (Turbopack). Needs no secrets: SDK clients are created at request time (`getResend()`); CI builds with no env vars |
 | Cron | Only `/api/cron/sequences`, daily `0 10 * * *` (README says hourly) |
 | Firebase | Firestore only. `firebase.json` points at a non-existent `functions/` dir. No `firestore.rules` or `firestore.indexes.json` in the repo |
 | Required composite index | `emails(status ==, scheduledAt <=)` for send-scheduled. Inbox, outbox, and drafts sort in memory to avoid indexes |

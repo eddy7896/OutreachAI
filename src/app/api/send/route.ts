@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
-import { Resend } from 'resend';
+import { getResend } from '@/lib/resend';
 import { fetchOne } from '@/lib/firestore';
 import { AppSettings } from '@/types';
-
-const resend = new Resend(process.env.RESEND_API_KEY || '');
 
 export async function POST(req: Request) {
   try {
@@ -27,10 +25,10 @@ export async function POST(req: Request) {
 
     const senderName = settings?.profile?.name || 'Outreach AI';
 
-    const data = await resend.emails.send({
+    const data = await getResend().emails.send({
       from: `${senderName} <${fromEmail}>`,
       to: [to],
-      ...(replyToEmail ? { reply_to: replyToEmail } : {}),
+      ...(replyToEmail ? { replyTo: replyToEmail } : {}),
       subject: subject,
       html: body,
     });
