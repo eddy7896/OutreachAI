@@ -239,6 +239,15 @@ for (const [route, r] of Object.entries(routes)) {
   }
 }
 
+// Server code must call shared functions (src/lib/*), not the app's own API over HTTP:
+// internal requests carry no user session and are rejected once routes require sign-in.
+for (const file of srcFiles.filter((f) => f.includes(`${path.sep}api${path.sep}`) && !/\.test\.ts$/.test(f))) {
+  const text = read(file);
+  for (const m of text.matchAll(/fetch\(\s*`\$\{[^}]+\}(\/api\/[a-z0-9\-/]+)/gi)) {
+    add('ERROR', 'INTERNAL_HTTP_CALL', `server code calls ${m[1]} over HTTP; import the shared function instead`, `${file}:${lineOf(text, m.index)}`);
+  }
+}
+
 // Stored HTML (inbound email, signatures) is attacker-controlled: it must pass through sanitizeHtml().
 for (const file of srcFiles) {
   const text = read(file);

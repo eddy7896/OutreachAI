@@ -1,44 +1,20 @@
 import { NextResponse } from 'next/server';
-import { getResend } from '@/lib/resend';
-import { fetchOne } from '@/lib/firestore';
-import { AppSettings } from '@/types';
+import { EmailRejectedError, sendEmail } from '@/lib/email';
 
 export async function POST(req: Request) {
   try {
-    const { emailId, to, subject, body } = await req.json();
+    const { to, subject, body } = await req.json();
 
     if (!to || !subject || !body) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Fetch the settings to get the dynamic sender email
-    const settings = await fetchOne<AppSettings>('settings', 'global');
-    const senderEmail = settings?.profile?.senderEmail;
-    const replyToEmail = settings?.profile?.replyToEmail;
-
-    let fromEmail = 'onboarding@resend.dev';
-    if (senderEmail) {
-      fromEmail = senderEmail;
-    } else if (process.env.NODE_ENV !== 'development') {
-      fromEmail = 'hello@yourdomain.com'; // fallback if no setting exists
-    }
-
-    const senderName = settings?.profile?.name || 'Outreach AI';
-
-    const data = await getResend().emails.send({
-      from: `${senderName} <${fromEmail}>`,
-      to: [to],
-      ...(replyToEmail ? { replyTo: replyToEmail } : {}),
-      subject: subject,
-      html: body,
-    });
-
-    if (data.error) {
-      return NextResponse.json({ error: data.error.message }, { status: 400 });
-    }
-
-    return NextResponse.json({ success: true, messageId: data.data?.id });
+    const { messageId } = await sendEmail({ to, subject, html: body });
+    return NextResponse.json({ success: true, messageId });
   } catch (error: any) {
+    if (error instanceof EmailRejectedError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     console.error('Error sending email via Resend:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }

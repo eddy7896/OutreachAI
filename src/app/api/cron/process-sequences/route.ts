@@ -3,6 +3,7 @@ import { collection, query, where, getDocs, doc, updateDoc, addDoc, serverTimest
 import { db } from '@/lib/firebase';
 import { Campaign, Sequence, Lead, SequenceNode, Email, Product, EmailTemplate } from '@/types';
 import { getNextValidSendTime } from '@/lib/scheduling';
+import { generateEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
@@ -108,14 +109,14 @@ export async function POST(request: Request) {
             const timezone = campaign.timezone || 'America/New_York';
             const scheduledTime = getNextValidSendTime(now, timezone, scheduleWindow);
 
-            // Payload for Generation
-            const baseUrl = request.headers.get('origin') || 'http://localhost:3000';
-            const genRes = await fetch(`${baseUrl}/api/generate`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ lead, productContext: product, template })
-            });
-            const genData = await genRes.json();
+            // Generate; on failure skip this lead (it stays on this node) rather than queue an empty email
+            let genData: { subject: string; body: string };
+            try {
+              genData = await generateEmail({ lead, productContext: product, template });
+            } catch (genError) {
+              console.error(`Generation failed for lead ${lead.id}:`, genError);
+              continue;
+            }
 
             await addDoc(collection(db, 'emails'), {
               leadId: lead.id,
