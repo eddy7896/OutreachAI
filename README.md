@@ -29,6 +29,7 @@ An intelligent, automated B2B sales development platform built with Next.js and 
 ## 💻 Local Setup & Installation
 
 ### 1. Clone & Install
+Requires **Node.js 22** (`.nvmrc`; `firebase-admin` needs it). On Vercel the version comes from `engines` in `package.json`; also set *Settings → General → Node.js Version* to **22.x**.
 ```bash
 git clone <your-repo-url>
 cd emailoutreach
