@@ -48,7 +48,7 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="..."
 NEXT_PUBLIC_FIREBASE_APP_ID="..."
 
 # Sign-in (Google via Firebase Auth)
-FIREBASE_SERVICE_ACCOUNT='{"type":"service_account",...}' # Service-account JSON (raw or base64). Server only.
+FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...} # Downloaded key file JSON as-is (or base64 of it). Server only.
 ALLOWED_EMAIL_DOMAINS="easyio.tech" # Comma-separated; only these Google accounts can sign in
 NEXT_PUBLIC_GOOGLE_HOSTED_DOMAIN="easyio.tech" # Optional: pre-selects the domain in Google's account picker
 
@@ -89,7 +89,8 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 Every page and API route requires a Google sign-in from an allowed domain (`src/proxy.ts`). Without the configuration below, the app responds with **503 "Sign-in is not configured"**.
 1. Firebase console → **Authentication → Sign-in method** → enable **Google**.
 2. Authentication → Settings → **Authorized domains** → add your production domain (and preview domains if needed).
-3. Project settings → **Service accounts** → *Generate new private key*. Put the JSON (or its base64) in `FIREBASE_SERVICE_ACCOUNT`. Never commit it.
+3. Project settings → **Service accounts** → *Generate new private key*. In Vercel, paste the whole downloaded file into `FIREBASE_SERVICE_ACCOUNT` exactly as it is (no surrounding quotes), or paste its base64 (`base64 -w0 key.json`). Never commit it.
+   If the site shows **503 "Sign-in is not configured on this server: …"**, the text after the colon names the setting to fix.
 4. Set `ALLOWED_EMAIL_DOMAINS=easyio.tech`.
 
 Public endpoints that authenticate callers themselves: `/api/webhook/inbound` (Resend signature), `/api/cron/sequences` (`CRON_SECRET`), `/api/leads/import` (extension key), `/api/track` (tracking pixel), `/api/auth/session` (Google ID token).

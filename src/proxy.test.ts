@@ -52,4 +52,10 @@ describe('proxy', () => {
     expect((await proxy(request('/leads'))).status).toBe(503);
     expect((await proxy(request('/api/send'))).status).toBe(503);
   });
+
+  it('says which setting is wrong in the 503', async () => {
+    verifySession.mockRejectedValue(new AuthNotConfiguredError('FIREBASE_SERVICE_ACCOUNT is not valid JSON'));
+    expect(await (await proxy(request('/leads'))).text()).toBe('Sign-in is not configured on this server: FIREBASE_SERVICE_ACCOUNT is not valid JSON');
+    expect((await (await proxy(request('/api/send'))).json()).reason).toBe('FIREBASE_SERVICE_ACCOUNT is not valid JSON');
+  });
 });
