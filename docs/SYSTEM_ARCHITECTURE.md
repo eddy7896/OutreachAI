@@ -31,7 +31,7 @@ flowchart LR
 ```
 
 **Trust boundaries (important):**
-- There is **no user authentication**. Every page and every API route except `/api/leads/import` (extension key), `/api/cron/sequences` (optional `CRON_SECRET`) and `/api/webhook/inbound` (Resend signature) is publicly callable.
+- **Google sign-in is required** (`src/proxy.ts`): every page and API route needs a valid Firebase session cookie (`__session`) for an allowed domain (`ALLOWED_EMAIL_DOMAINS`, e.g. `easyio.tech`). Public exceptions authenticate callers themselves: `/api/webhook/inbound` (Resend signature), `/api/cron/sequences` (`CRON_SECRET`), `/api/leads/import` (extension key), `/api/auth/session` (Google ID token) and `/api/track` (tracking pixel, intentionally open). Sessions are minted by `/api/auth/session` from a fresh Google sign-in. Missing configuration fails closed (503).
 - Stored HTML (inbound email bodies, signatures) is rendered only through `sanitizeHtml()` (DOMPurify), enforced by the `UNSANITIZED_HTML` system check.
 - The browser holds the Firebase web config and talks to Firestore directly. The app only works if **Firestore security rules allow unauthenticated read/write**, so the database is effectively public. See [SYSTEM_ANALYSIS.md §4](./SYSTEM_ANALYSIS.md#4-security-posture).
 
@@ -126,19 +126,20 @@ Timestamps are mixed: `Timestamp.now()` (lib), `serverTimestamp()` (inbox, proce
 
 | Route | Method | Auth | Called by | What it does |
 |---|---|---|---|---|
-| `/api/classify` | POST | none | Classify page (single and bulk) | Intent prompt → `generateWithFallback(json)` → returns `{intent, summary, action_required}` unvalidated |
-| `/api/generate` | POST | none | Compose, Campaign "Run" (engines call `generateEmail()` directly) | Resolves `{{snake_case}}` placeholders. If product context exists, asks the LLM to polish into `{subject, body}` |
-| `/api/auto-format` | POST | none | Compose and Campaign "Run" when no template | Writes a fresh email from lead and product context (<150 words) |
-| `/api/generate-template` | POST | none | TemplateEditor ("AI generate"); Guides presets route to `/templates/new?preset=` | Writes a template using `{{firstName}}`-style placeholders |
-| `/api/send` | POST | none | Compose, Inbox reply, engines | Resend `emails.send`. `from` = `settings.profile.senderEmail` or a fallback. Reply-To = `settings.profile.replyToEmail` (as `replyTo`). The Resend client is created on first use (`src/lib/resend.ts`) |
-| `/api/track` | GET | none | 1×1 pixel in sent HTML | Sets `emails/{id}` `opened=true`, `status='opened'` (fire-and-forget) |
+| `/api/auth/session` | POST, DELETE | Google ID token + same-origin check | Login page, sign-out | Creates or clears the `__session` cookie (5 days) for a verified Google account on an allowed domain |
+| `/api/classify` | POST | session | Classify page (single and bulk) | Intent prompt → `generateWithFallback(json)` → returns `{intent, summary, action_required}` unvalidated |
+| `/api/generate` | POST | session | Compose, Campaign "Run" (engines call `generateEmail()` directly) | Resolves `{{snake_case}}` placeholders. If product context exists, asks the LLM to polish into `{subject, body}` |
+| `/api/auto-format` | POST | session | Compose and Campaign "Run" when no template | Writes a fresh email from lead and product context (<150 words) |
+| `/api/generate-template` | POST | session | TemplateEditor ("AI generate"); Guides presets route to `/templates/new?preset=` | Writes a template using `{{firstName}}`-style placeholders |
+| `/api/send` | POST | session | Compose, Inbox reply, engines | Resend `emails.send`. `from` = `settings.profile.senderEmail` or a fallback. Reply-To = `settings.profile.replyToEmail` (as `replyTo`). The Resend client is created on first use (`src/lib/resend.ts`) |
+| `/api/track` | GET | none (public pixel) | 1×1 pixel in sent HTML | Sets `emails/{id}` `opened=true`, `status='opened'` (fire-and-forget) |
 | `/api/webhook/inbound` | POST | Resend (Svix) signature, `RESEND_WEBHOOK_SECRET`; fails closed if unset | Resend webhooks | `email.opened` → mark opened. `email.received` → fetch body, match lead, classify, store inbound email, update `lead.status` and `hasUnread` |
-| `/api/enrich` | POST | none | LeadForm "auto-fill" | Local Firestore → Hunter email-verifier → Apollo people/match |
-| `/api/enrich/bulk` | POST | none | BulkCompanyDialog | Hunter domain-search (limit 10) → creates leads (`targetProduct: 'Default'`) |
+| `/api/enrich` | POST | session | LeadForm "auto-fill" | Local Firestore → Hunter email-verifier → Apollo people/match |
+| `/api/enrich/bulk` | POST | session | BulkCompanyDialog | Hunter domain-search (limit 10) → creates leads (`targetProduct: 'Default'`) |
 | `/api/leads/import` | POST | `Bearer EXTENSION_API_KEY` | Chrome extension | Finds the email via Hunter or Apollo if missing, otherwise a placeholder `unknown_<ts>@needs-enrichment.com`. Creates the lead |
 | `/api/cron/sequences` | GET | `Bearer CRON_SECRET` if set | Vercel Cron (daily) | **Engine B**, see §6.3 |
-| `/api/cron/process-sequences` | POST | none | Campaign page "Process Sequence" button | **Engine A**, see §6.3 |
-| `/api/cron/send-scheduled` | POST | none | **nothing** (no UI, no cron) | Sends `emails` with `status=='scheduled' && scheduledAt<=now`, increments `campaign.stats.sent` |
+| `/api/cron/process-sequences` | POST | session | Campaign page "Process Sequence" button | **Engine A**, see §6.3 |
+| `/api/cron/send-scheduled` | POST | session | **nothing** (no UI, no cron) | Sends `emails` with `status=='scheduled' && scheduledAt<=now`, increments `campaign.stats.sent` |
 
 Server code never calls the app's own API over HTTP: the engines and `send-scheduled` call `generateEmail()` / `sendEmail()` from `src/lib/email.ts`, which `/api/generate` and `/api/send` also wrap. Enforced by the `INTERNAL_HTTP_CALL` system check.
 
