@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { collection, query, where, getDocs, doc, updateDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Email, Campaign } from '@/types';
+import { sendEmail } from '@/lib/email';
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const now = new Date();
     
@@ -26,20 +27,14 @@ export async function POST(request: Request) {
       const lead = leadSnap.data();
 
       // 2. Send via Resend
-      const baseUrl = request.headers.get('origin') || 'http://localhost:3000';
-      const sendRes = await fetch(`${baseUrl}/api/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: lead.email,
-          subject: email.subject,
-          body: email.body
-        })
-      });
+      let sendData: { messageId?: string } | null = null;
+      try {
+        sendData = await sendEmail({ to: lead.email, subject: email.subject, html: email.body });
+      } catch (sendError) {
+        console.error(`Scheduled send failed for email ${email.id}:`, sendError);
+      }
 
-      if (sendRes.ok) {
-        const sendData = await sendRes.json();
-        
+      if (sendData) {
         // 3. Update Email Document
         await updateDoc(doc(db, 'emails', email.id), {
           status: 'sent',

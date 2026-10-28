@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { deleteField } from 'firebase/firestore';
 import { fetchAll, createDocument, updateDocument } from '@/lib/firestore';
+import { generateEmail, sendEmail } from '@/lib/email';
 import { Campaign, Lead, Sequence, Product, EmailTemplate, Email, Signature } from '@/types';
 
 // Vercel Cron routes can optionally verify a secret header to prevent unauthorized runs
@@ -141,17 +142,8 @@ export async function GET(req: Request) {
               continue;
             }
 
-            // 1. Ask Gemini to generate it
-            const genResponse = await fetch(`${origin}/api/generate`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ lead, productContext: product, template }),
-            });
-            const genData = await genResponse.json();
-
-            if (!genResponse.ok || !genData.subject || !genData.body) {
-              throw new Error(`generation failed: ${genData.error || genResponse.status}`);
-            }
+            // 1. Ask Gemini to generate it (throws on failure; the lead is retried next run)
+            const genData = await generateEmail({ lead, productContext: product, template });
 
             // 2. Create Email doc
             const newEmail = await createDocument<Email>('emails', {
@@ -169,17 +161,13 @@ export async function GET(req: Request) {
             const trackingPixel = `<img src="${origin}/api/track?emailId=${newEmail.id}" width="1" height="1" alt="" />`;
             const finalBody = genData.body + signatureHtml + trackingPixel;
 
-            const sendResponse = await fetch(`${origin}/api/send`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ to: lead.email, subject: genData.subject, body: finalBody }),
-            });
-            const sendData = await sendResponse.json().catch(() => ({}));
-
-            if (!sendResponse.ok) {
+            let sendData: { messageId?: string };
+            try {
+              sendData = await sendEmail({ to: lead.email, subject: genData.subject, html: finalBody });
+            } catch (sendError) {
               // Record the failure and keep the lead on this node so the next run retries.
               await updateDocument('emails', newEmail.id, { body: finalBody, status: 'failed' });
-              throw new Error(`send failed: ${sendData.error || sendResponse.status}`);
+              throw sendError;
             }
 
             // 4. Update Email doc with final details

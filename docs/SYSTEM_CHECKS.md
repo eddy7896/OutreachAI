@@ -40,6 +40,7 @@ Static, dependency-free, and fast (<1 s). It reads the repo and reports `ERROR` 
 | `BUILD_ENV_REQUIRED` | WARN | Module-scope SDK construction that breaks `next build` without secrets |
 | `RESEND_OPTION_KEY` | ERROR | snake_case Resend options (`reply_to`, `scheduled_at`) that SDK v6 silently drops |
 | `UNSANITIZED_HTML` | ERROR | `dangerouslySetInnerHTML` whose value isn't wrapped in `sanitizeHtml()` |
+| `INTERNAL_HTTP_CALL` | ERROR | Server code calling the app's own `/api/*` over HTTP instead of the shared function |
 | `ROUTE_NO_AUTH` | WARN for send/cron/enrich/leads, INFO otherwise | Route handlers with no caller authentication |
 | `MODEL_PINNED` | INFO | Hard-coded model ids to re-verify periodically |
 
