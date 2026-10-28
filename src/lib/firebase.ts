@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getAuth, type Auth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,4 +15,10 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const db = getFirestore(app);
+
+// Called lazily (in effects and handlers) because Auth validates the API key on
+// creation, and pages are prerendered at build time without Firebase env vars.
+export function getClientAuth(): Auth {
+  return getAuth(app);
+}
 export default app;

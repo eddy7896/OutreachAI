@@ -9,7 +9,7 @@
 
 An internal, single-user **AI SDR tool**. It imports and enriches leads, generates personalized cold emails grounded in a product registry, sends them through Resend, automates follow-ups with branching sequences, ingests replies through a Resend webhook, classifies reply intent with an LLM, and reports funnel analytics.
 
-**Users:** one internal operator (no accounts, no roles). **Volume target:** ~20–30 emails/day.
+**Users:** company staff signing in with Google (`@easyio.tech`). No roles yet; per-user data ownership arrives in Phase 1 (PR 1.3). **Volume target:** ~20–30 emails/day.
 
 ## 2. Stack (actual versions from `package.json`)
 
@@ -23,7 +23,7 @@ An internal, single-user **AI SDR tool**. It imports and enriches leads, generat
 | Enrichment | Hunter.io (verifier, domain-search, email-finder), Apollo.io (people/match) |
 | Scheduling | Vercel Cron (daily) + `date-fns-tz` send-window logic |
 | Import | SheetJS `xlsx` (client-side) and a Chrome MV3 extension (LinkedIn) |
-| Auth | **None** (only the extension key and optional cron secret) |
+| Auth | Google sign-in via Firebase Auth, limited to `ALLOWED_EMAIL_DOMAINS`; session cookie checked by `src/proxy.ts`; `firebase-admin` on the server |
 
 > Agent note (from `AGENTS.md`): this Next.js version has breaking changes compared with older training data. Read `node_modules/next/dist/docs/` before writing framework code.
 
@@ -70,6 +70,7 @@ These are string-keyed contracts the type system does not enforce. `scripts/syst
 7. Render stored HTML only through `sanitizeHtml()` (`src/lib/sanitizeHtml.ts`); inbound email is attacker-controlled.
 8. Secrets live only in server env vars. Never read `settings.apiKeys` server-side or expose new keys through `NEXT_PUBLIC_*`.
 9. Do not instantiate SDK clients that throw on empty keys at module scope (this breaks `next build`).
+10. New API routes are private by default (the proxy requires a session). Add a path to `PUBLIC_EXACT` in `src/lib/auth/config.ts` only if the route authenticates callers itself, and call `requireUser()` in private handlers.
 
 ## 6. Known-broken or unfinished areas (do not assume they work)
 

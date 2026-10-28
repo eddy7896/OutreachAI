@@ -9,12 +9,13 @@ import IconButton from '@mui/material/IconButton';
 import Badge from '@mui/material/Badge';
 import InputBase from '@mui/material/InputBase';
 import { styled, alpha } from '@mui/material/styles';
-import { Search as SearchIcon, Notifications, Settings, Menu as MenuIcon } from '@mui/icons-material';
+import { Search as SearchIcon, Notifications, Settings, Menu as MenuIcon, Logout as LogoutIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { 
   Popover, List, ListItem, ListItemText, ListItemAvatar, Avatar, 
-  Button, Divider 
+  Button, Divider, Tooltip 
 } from '@mui/material';
 import { 
   Info as InfoIcon, Warning as WarningIcon, CheckCircle as SuccessIcon, Error as ErrorIcon 
@@ -66,6 +67,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 export default function TopBar({ onDrawerToggle }: { onDrawerToggle?: () => void }) {
   const router = useRouter();
   const { notifications, markAsRead, markAllAsRead } = useNotifications();
+  const { user, signOut } = useAuth();
   const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -147,6 +149,20 @@ export default function TopBar({ onDrawerToggle }: { onDrawerToggle?: () => void
           <IconButton size="large" color="inherit" onClick={() => router.push('/settings')}>
             <Settings />
           </IconButton>
+          {user && (
+            <>
+              <Tooltip title={user.email || ''}>
+                <Avatar src={user.photoURL || undefined} alt={user.displayName || user.email || ''} sx={{ width: 32, height: 32 }}>
+                  {(user.displayName || user.email || '?').charAt(0).toUpperCase()}
+                </Avatar>
+              </Tooltip>
+              <Tooltip title="Sign out">
+                <IconButton size="large" color="inherit" aria-label="sign out" onClick={() => void signOut()}>
+                  <LogoutIcon />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
         </Box>
       </Toolbar>
 

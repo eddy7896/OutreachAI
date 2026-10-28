@@ -222,10 +222,20 @@ for (const file of srcFiles) {
     add('ERROR', 'RESEND_OPTION_KEY', `${s[1]} is ignored by the Resend SDK (use ${s[1] === 'reply_to' ? 'replyTo' : 'scheduledAt'})`, `${file}:${lineOf(text, s.index)}`);
   }
 }
+// With src/proxy.ts, every route except the public list in src/lib/auth/config.ts needs a
+// session. Public routes must authenticate callers themselves.
+const hasProxy = exists('src/proxy.ts') && exists('src/lib/auth/config.ts');
+const publicBlock = hasProxy ? /PUBLIC_EXACT = new Set\(\[([\s\S]*?)\]\)/.exec(read('src/lib/auth/config.ts')) : null;
+const publicPaths = new Set(publicBlock ? [...publicBlock[1].matchAll(/'(\/[^']*)'/g)].map((m) => m[1]) : []);
+const INTENTIONALLY_OPEN = new Set(['/api/track']); // tracking pixel fetched by email clients
 for (const [route, r] of Object.entries(routes)) {
-  if (!/authorization/i.test(r.text)) {
-    const level = /\/api\/(send|cron|enrich|leads)/.test(route) ? 'WARN' : 'INFO';
-    add(level, 'ROUTE_NO_AUTH', `${r.methods.join(',')} ${route} performs no caller authentication`, r.file);
+  const ownAuth = /authorization|verifyWebhookSignature|verifyIdToken|requireUser\(/i.test(r.text);
+  const label = `${r.methods.join(',')} ${route}`;
+  if (hasProxy && !publicPaths.has(route)) {
+    if (!ownAuth) add('INFO', 'ROUTE_PROXY_ONLY', `${label} relies on the proxy alone; add requireUser() in the handler`, r.file);
+  } else if (!ownAuth && !INTENTIONALLY_OPEN.has(route)) {
+    const level = hasProxy || /\/api\/(send|cron|enrich|leads)/.test(route) ? 'WARN' : 'INFO';
+    add(level, 'ROUTE_NO_AUTH', `${label} is public and performs no caller authentication`, r.file);
   }
 }
 
