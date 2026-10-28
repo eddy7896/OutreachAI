@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import ThemeRegistry from "@/components/layout/ThemeRegistry";
 import MainLayout from "@/components/layout/MainLayout";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 
 export const metadata: Metadata = {
   title: "Email Outreach & Intent Classification",
@@ -16,9 +17,11 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ThemeRegistry>
-          <MainLayout>
-            {children}
-          </MainLayout>
+          <AuthProvider>
+            <MainLayout>
+              {children}
+            </MainLayout>
+          </AuthProvider>
         </ThemeRegistry>
       </body>
     </html>

@@ -47,6 +47,11 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="..."
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="..."
 NEXT_PUBLIC_FIREBASE_APP_ID="..."
 
+# Sign-in (Google via Firebase Auth)
+FIREBASE_SERVICE_ACCOUNT='{"type":"service_account",...}' # Service-account JSON (raw or base64). Server only.
+ALLOWED_EMAIL_DOMAINS="easyio.tech" # Comma-separated; only these Google accounts can sign in
+NEXT_PUBLIC_GOOGLE_HOSTED_DOMAIN="easyio.tech" # Optional: pre-selects the domain in Google's account picker
+
 # Email Provider
 RESEND_API_KEY="re_..."
 RESEND_WEBHOOK_SECRET="whsec_..." # Required: signing secret of the Resend webhook (Webhooks → your endpoint)
@@ -79,6 +84,15 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 ---
 
 ## ⚙️ Architecture & Configuration Guide
+
+### 0. Sign-in (required)
+Every page and API route requires a Google sign-in from an allowed domain (`src/proxy.ts`). Without the configuration below, the app responds with **503 "Sign-in is not configured"**.
+1. Firebase console → **Authentication → Sign-in method** → enable **Google**.
+2. Authentication → Settings → **Authorized domains** → add your production domain (and preview domains if needed).
+3. Project settings → **Service accounts** → *Generate new private key*. Put the JSON (or its base64) in `FIREBASE_SERVICE_ACCOUNT`. Never commit it.
+4. Set `ALLOWED_EMAIL_DOMAINS=easyio.tech`.
+
+Public endpoints that authenticate callers themselves: `/api/webhook/inbound` (Resend signature), `/api/cron/sequences` (`CRON_SECRET`), `/api/leads/import` (extension key), `/api/track` (tracking pixel), `/api/auth/session` (Google ID token).
 
 ### 1. Setting up the Chrome Extension
 The repository includes a custom Chrome/Edge extension in the `/extension` directory for scraping LinkedIn.
