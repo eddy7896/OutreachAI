@@ -258,6 +258,24 @@ for (const file of srcFiles) {
   }
 }
 
+// Runtime Node version: every direct dependency's minimum must fit package.json "engines".
+// (Vercel picks Node from engines; firebase-admin 14 needs >=22 for require() of ESM-only jose.)
+{
+  const rootPkg = JSON.parse(read('package.json'));
+  const declared = rootPkg.engines?.node;
+  const declaredMajor = Number(/(\d+)/.exec(declared || '')?.[1]);
+  if (!declared) add('ERROR', 'NODE_ENGINE', 'package.json has no "engines.node"; the host may run an older Node than dependencies need', 'package.json');
+  for (const dep of Object.keys(rootPkg.dependencies || {})) {
+    const depPkgPath = `node_modules/${dep}/package.json`;
+    if (!exists(depPkgPath)) continue;
+    const need = JSON.parse(read(depPkgPath)).engines?.node;
+    const needMajor = Number(/>=\s*(\d+)/.exec(need || '')?.[1]);
+    if (declared && needMajor && declaredMajor < needMajor) {
+      add('ERROR', 'NODE_ENGINE', `${dep} requires node ${need} but package.json engines.node is "${declared}"`, 'package.json');
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // 12. Hard-coded model identifiers (review for deprecation / availability)
 // ---------------------------------------------------------------------------
