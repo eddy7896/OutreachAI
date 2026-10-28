@@ -68,7 +68,7 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     if (error instanceof AuthNotConfiguredError) {
       console.error(`Sign-in unavailable: ${error.message}`);
-      return NextResponse.json({ error: 'Sign-in is not configured on this server' }, { status: 503 });
+      return NextResponse.json({ error: 'Sign-in is not configured on this server', reason: error.message }, { status: 503 });
     }
     console.error('Error creating session:', error);
     return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });

@@ -19,10 +19,15 @@ export async function proxy(req: NextRequest) {
     if (error instanceof AuthNotConfiguredError) {
       // Fail closed, but say why instead of looping through /login.
       console.error(`Auth not configured: ${error.message}`);
+      // The reason names a setting, never a secret value, so it's safe to show.
       return isApi
-        ? NextResponse.json({ error: 'Sign-in is not configured on this server' }, { status: 503 })
-        : new NextResponse('Sign-in is not configured on this server. Set FIREBASE_SERVICE_ACCOUNT and ALLOWED_EMAIL_DOMAINS.', { status: 503 });
+        ? NextResponse.json({ error: 'Sign-in is not configured on this server', reason: error.message }, { status: 503 })
+        : new NextResponse(`Sign-in is not configured on this server: ${error.message}`, {
+            status: 503,
+            headers: { 'content-type': 'text/plain; charset=utf-8' },
+          });
     }
+    console.error('Session check failed:', error);
     throw error;
   }
 
