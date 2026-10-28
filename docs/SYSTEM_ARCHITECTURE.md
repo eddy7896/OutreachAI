@@ -127,7 +127,7 @@ Timestamps are mixed: `Timestamp.now()` (lib), `serverTimestamp()` (inbox, proce
 | Route | Method | Auth | Called by | What it does |
 |---|---|---|---|---|
 | `/api/classify` | POST | none | Classify page (single and bulk) | Intent prompt → `generateWithFallback(json)` → returns `{intent, summary, action_required}` unvalidated |
-| `/api/generate` | POST | none | Compose, Campaign "Run", both engines (server→self HTTP) | Resolves `{{snake_case}}` placeholders. If product context exists, asks the LLM to polish into `{subject, body}` |
+| `/api/generate` | POST | none | Compose, Campaign "Run" (engines call `generateEmail()` directly) | Resolves `{{snake_case}}` placeholders. If product context exists, asks the LLM to polish into `{subject, body}` |
 | `/api/auto-format` | POST | none | Compose and Campaign "Run" when no template | Writes a fresh email from lead and product context (<150 words) |
 | `/api/generate-template` | POST | none | TemplateEditor ("AI generate"); Guides presets route to `/templates/new?preset=` | Writes a template using `{{firstName}}`-style placeholders |
 | `/api/send` | POST | none | Compose, Inbox reply, engines | Resend `emails.send`. `from` = `settings.profile.senderEmail` or a fallback. Reply-To = `settings.profile.replyToEmail` (as `replyTo`). The Resend client is created on first use (`src/lib/resend.ts`) |
@@ -140,7 +140,7 @@ Timestamps are mixed: `Timestamp.now()` (lib), `serverTimestamp()` (inbox, proce
 | `/api/cron/process-sequences` | POST | none | Campaign page "Process Sequence" button | **Engine A**, see §6.3 |
 | `/api/cron/send-scheduled` | POST | none | **nothing** (no UI, no cron) | Sends `emails` with `status=='scheduled' && scheduledAt<=now`, increments `campaign.stats.sent` |
 
-Server-to-server calls go over HTTP to the app's own origin (`/api/generate`, `/api/send`). Engine A uses the request `Origin` header (falls back to `http://localhost:3000`). Engine B uses `new URL(req.url).origin`.
+Server code never calls the app's own API over HTTP: the engines and `send-scheduled` call `generateEmail()` / `sendEmail()` from `src/lib/email.ts`, which `/api/generate` and `/api/send` also wrap. Enforced by the `INTERNAL_HTTP_CALL` system check.
 
 ---
 

@@ -22,20 +22,14 @@ vi.mock('@/lib/firestore', () => ({
   }),
 }));
 
-// --- HTTP mock for /api/generate and /api/send ------------------------------
+// --- Generation and sending (called directly, not over HTTP) -------------------
 let sendOk = true;
-const fetchMock = vi.fn(async (url: string) => {
-  if (url.endsWith('/api/generate')) {
-    return new Response(JSON.stringify({ subject: 'Hello', body: '<p>Hi</p>' }), { status: 200 });
-  }
-  if (url.endsWith('/api/send')) {
-    return sendOk
-      ? new Response(JSON.stringify({ success: true, messageId: 'msg-1' }), { status: 200 })
-      : new Response(JSON.stringify({ error: 'rejected' }), { status: 400 });
-  }
-  throw new Error(`unexpected fetch ${url}`);
+const generateEmail = vi.fn(async () => ({ subject: 'Hello', body: '<p>Hi</p>' }));
+const sendEmail = vi.fn<(email: { to: string; subject: string; html: string }) => Promise<{ messageId?: string }>>(async () => {
+  if (!sendOk) throw new Error('rejected');
+  return { messageId: 'msg-1' };
 });
-vi.stubGlobal('fetch', fetchMock);
+vi.mock('@/lib/email', () => ({ generateEmail, sendEmail }));
 
 // --- Fixtures ---------------------------------------------------------------
 const sequence: Sequence = {
@@ -88,7 +82,8 @@ beforeEach(() => {
   updates.length = 0;
   creates.length = 0;
   sendOk = true;
-  fetchMock.mockClear();
+  generateEmail.mockClear();
+  sendEmail.mockClear();
 });
 
 describe('GET /api/cron/sequences', () => {
@@ -98,7 +93,8 @@ describe('GET /api/cron/sequences', () => {
 
     expect(status).toBe(200);
     expect(body.actionsTaken).toBe(1);
-    expect(fetchMock).toHaveBeenCalledWith('http://localhost:3000/api/send', expect.anything());
+    expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'a@example.com', subject: 'Hello' }));
+    expect(sendEmail.mock.calls[0]?.[0].html).toContain('http://localhost:3000/api/track?emailId=');
     const last = leadUpdates('a').at(-1)!;
     expect(last.currentSequenceNodeId).toBe('delay-1');
     expect(last.status).toBe('contacted');
@@ -164,19 +160,21 @@ describe('GET /api/cron/sequences', () => {
     seed([lead('a', { sequenceCompletedAt: daysAgo(1), status: 'contacted' })]);
     await run();
     expect(updates).toEqual([]);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(generateEmail).not.toHaveBeenCalled();
+    expect(sendEmail).not.toHaveBeenCalled();
   });
 
   it.each(['Meeting Booked', 'Not Interested'])('skips leads closed out as "%s"', async (contactStatus) => {
     seed([lead('a', { currentSequenceNodeId: 'email-1', status: 'contacted', contactStatus })]);
     await run();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(generateEmail).not.toHaveBeenCalled();
+    expect(sendEmail).not.toHaveBeenCalled();
   });
 
   it('isolates a failing lead from the rest of the run', async () => {
     seed([lead('a', { currentSequenceNodeId: 'email-1' }), lead('b', { currentSequenceNodeId: 'email-1' })]);
-    fetchMock.mockImplementationOnce(async () => {
-      throw new Error('network down');
+    generateEmail.mockImplementationOnce(async () => {
+      throw new Error('AI provider down');
     });
     const { status, body } = await run();
 
